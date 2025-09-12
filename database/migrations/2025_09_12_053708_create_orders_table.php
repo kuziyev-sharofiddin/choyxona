@@ -15,8 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('order_number')->unique();
             $table->foreignId('reservation_id')
-              ->constrained('reservations') // jadval nomini to‘g‘ri yozish kerak
-              ->onDelete('cascade');
+              ->constrained('reservations');
             $table->foreignId('customer_id')->constrained();
             $table->foreignId('waiter_id')->constrained('users');
             $table->decimal('subtotal', 12, 2);
