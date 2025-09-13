@@ -46,9 +46,9 @@ class ReportController extends Controller
 
         $orders = Order::whereDate('order_time', $date)->count();
 
-        $reservations = Reservation::whereDate('start_time', $date)->count();
+        $reservations = Reservation::whereDate('reservation_date', $date)->count();
 
-        $customers = Reservation::whereDate('start_time', $date)
+        $customers = Reservation::whereDate('reservation_date', $date)
             ->distinct('customer_id')
             ->count();
 
@@ -91,9 +91,9 @@ class ReportController extends Controller
 
         $orders = Order::whereBetween('order_time', [$startDate, $endDate])->count();
 
-        $reservations = Reservation::whereBetween('start_time', [$startDate, $endDate])->count();
+        $reservations = Reservation::whereBetween('reservation_date', [$startDate, $endDate])->count();
 
-        $customers = Reservation::whereBetween('start_time', [$startDate, $endDate])
+        $customers = Reservation::whereBetween('reservation_date', [$startDate, $endDate])
             ->distinct('customer_id')
             ->count();
 
@@ -224,7 +224,7 @@ class ReportController extends Controller
                 $title = 'Xonalar Hisoboti';
                 $data = Room::select('rooms.*')
                     ->join('reservations', 'rooms.id', '=', 'reservations.room_id')
-                    ->whereBetween('reservations.start_time', [$startDate, $endDate])
+                    ->whereBetween('reservations.reservation_date', [$startDate, $endDate])
                     ->groupBy('rooms.id')
                     ->selectRaw('COUNT(reservations.id) as total_bookings, SUM(reservations.room_charge) as total_revenue')
                     ->orderBy('total_revenue', 'desc')
