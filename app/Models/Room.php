@@ -2,20 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Room extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'name', 'name_uz', 'capacity', 'hourly_rate', 'description', 
+        'name', 'name_uz', 'capacity', 'daily_rate', 'description', 
         'amenities', 'status', 'image'
     ];
 
     protected $casts = [
-        'hourly_rate' => 'decimal:2',
+        'daily_rate' => 'decimal:2',
         'amenities' => 'array',
     ];
 
@@ -24,25 +25,76 @@ class Room extends Model
         return $this->hasMany(Reservation::class);
     }
 
-    public function currentReservation()
+    public function orders()
     {
-        return $this->hasOne(Reservation::class)
-                   ->where('status', 'checked_in')
-                   ->where('start_time', '<=', now())
-                   ->where('end_time', '>=', now());
+        return $this->hasMany(Order::class);
     }
 
-    public function isAvailable($startTime, $endTime)
+    // Kunlik asosda xonaning mavjudligini tekshirish
+    public function isAvailableForDate($date, $daysCount = 1)
     {
+        $startDate = Carbon::parse($date)->format('Y-m-d');
+        $endDate = Carbon::parse($date)->addDays($daysCount - 1)->format('Y-m-d');
+        
         return !$this->reservations()
-                    ->where('status', '!=', 'cancelled')
-                    ->where(function($query) use ($startTime, $endTime) {
-                        $query->whereBetween('start_time', [$startTime, $endTime])
-                              ->orWhereBetween('end_time', [$startTime, $endTime])
-                              ->orWhere(function($q) use ($startTime, $endTime) {
-                                  $q->where('start_time', '<=', $startTime)
-                                    ->where('end_time', '>=', $endTime);
-                              });
-                    })->exists();
+            ->where('status', '!=', 'cancelled')
+            ->where(function($query) use ($startDate, $endDate) {
+                $query->whereBetween('reservation_date', [$startDate, $endDate])
+                      ->orWhereBetween('end_date', [$startDate, $endDate])
+                      ->orWhere(function($q) use ($startDate, $endDate) {
+                          $q->where('reservation_date', '<=', $startDate)
+                            ->where('end_date', '>=', $endDate);
+                      });
+            })->exists();
+    }
+
+    // Bugungi aktiv rezervatsiyalar
+    public function getCurrentReservation()
+    {
+        $today = Carbon::today()->format('Y-m-d');
+        
+        return $this->reservations()
+            ->where('status', 'confirmed')
+            ->where('reservation_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->first();
+    }
+
+    // Xona holatini yangilash
+    public function updateStatusBasedOnReservations()
+    {
+        $currentReservation = $this->getCurrentReservation();
+        
+        if ($currentReservation) {
+            $this->update(['status' => 'occupied']);
+        } else {
+            $this->update(['status' => 'available']);
+        }
+    }
+
+    // Band bo'lgan kunlarni olish (calendar uchun)
+    public function getBookedDates($month = null, $year = null)
+    {
+        $query = $this->reservations()
+            ->where('status', '!=', 'cancelled')
+            ->select('reservation_date', 'end_date');
+
+        if ($month && $year) {
+            $query->whereYear('reservation_date', $year)
+                  ->whereMonth('reservation_date', $month);
+        }
+
+        $bookedDates = [];
+        foreach ($query->get() as $reservation) {
+            $current = Carbon::parse($reservation->reservation_date);
+            $end = Carbon::parse($reservation->end_date);
+            
+            while ($current->lte($end)) {
+                $bookedDates[] = $current->format('Y-m-d');
+                $current->addDay();
+            }
+        }
+
+        return array_unique($bookedDates);
     }
 }

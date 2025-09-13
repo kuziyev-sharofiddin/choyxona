@@ -39,8 +39,8 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="hourly_rate" class="form-label">Soatlik Narx (so'm) *</label>
-                                <input type="number" class="form-control" id="hourly_rate" name="hourly_rate" value="{{ old('hourly_rate') }}" min="0" step="1000" required>
+                                <label for="daily_rate" class="form-label">Kunlik Narx (so'm) *</label>
+                                <input type="number" class="form-control" id="daily_rate" name="daily_rate" value="{{ old('daily_rate') }}" min="0" step="1000" required>
                             </div>
                         </div>
                     </div>

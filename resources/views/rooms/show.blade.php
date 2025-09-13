@@ -44,7 +44,7 @@
                             </tr>
                             <tr>
                                 <th>Soatlik narx:</th>
-                                <td><strong class="text-success">{{ number_format($room->hourly_rate) }} so'm</strong></td>
+                                <td><strong class="text-success">{{ number_format($room->daily_rate) }} so'm</strong></td>
                             </tr>
                             <tr>
                                 <th>Holat:</th>

@@ -11,10 +11,15 @@ class RoomController extends Controller
 {
     public function index()
     {
-        $rooms = Room::withCount(['reservations' => function($q) {
-            $q->whereDate('start_time', today());
+        $today = today();
+        
+        $rooms = Room::withCount(['reservations' => function($q) use ($today) {
+            // Bugun faol rezervatsiyalar
+            $q->where('reservation_date', '<=', $today)
+              ->where('end_date', '>=', $today)
+              ->where('status', 'confirmed');
         }])->orderBy('name')->get();
-
+    
         return view('rooms.index', compact('rooms'));
     }
 
@@ -29,7 +34,7 @@ class RoomController extends Controller
             'name' => 'required|string|max:255',
             'name_uz' => 'required|string|max:255',
             'capacity' => 'required|integer|min:1',
-            'hourly_rate' => 'required|numeric|min:0',
+            'daily_rate' => 'required|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'amenities' => 'nullable|array',
         ]);
@@ -73,7 +78,7 @@ class RoomController extends Controller
             'name' => 'required|string|max:255',
             'name_uz' => 'required|string|max:255',
             'capacity' => 'required|integer|min:1',
-            'hourly_rate' => 'required|numeric|min:0',
+            'daily_rate' => 'required|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'amenities' => 'nullable|array',
         ]);

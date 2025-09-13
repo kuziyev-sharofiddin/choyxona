@@ -2,32 +2,56 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Customer;
-use App\Models\Reservation;
+use Carbon\Carbon;
 use App\Models\Room;
 use App\Models\User;
+use App\Models\Customer;
+use App\Models\Reservation;
 use Illuminate\Http\Request;
 
 class ReservationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $reservations = Reservation::with(['customer', 'room', 'waiter'])
-            ->orderBy('start_time', 'desc')
-            ->paginate(20);
+        $query = Reservation::with(['customer', 'room', 'user']);
 
-        return view('reservations.index', compact('reservations'));
+        // Qidiruv filterlari
+        if ($request->search) {
+            $query->whereHas('customer', function($q) use ($request) {
+                $q->where('name', 'LIKE', '%' . $request->search . '%')
+                  ->orWhere('phone', 'LIKE', '%' . $request->search . '%');
+            });
+        }
+
+        if ($request->room_id) {
+            $query->where('room_id', $request->room_id);
+        }
+
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->date) {
+            $query->where('reservation_date', $request->date);
+        }
+
+        $reservations = $query->orderBy('reservation_date', 'desc')
+                             ->paginate(20);
+
+        $rooms = Room::all();
+        
+        return view('reservations.index', compact('reservations', 'rooms'));
     }
 
     public function create(Request $request)
     {
         $rooms = Room::where('status', 'available')->get();
-        $waiters = User::whereHas('role', function ($q) {
+        $waiters = User::whereHas('role', function($q) {
             $q->where('name', 'waiter');
         })->where('is_active', true)->get();
-
+        
         $selectedRoom = null;
-        if ($request->room_id) {
+        if($request->room_id) {
             $selectedRoom = Room::find($request->room_id);
         }
 
@@ -40,99 +64,136 @@ class ReservationController extends Controller
             'customer_name' => 'required|string|max:255',
             'customer_phone' => 'required|string|max:20',
             'room_id' => 'required|exists:rooms,id',
-            'start_time' => 'required|date|after:now',
-            'end_time' => 'required|date|after:start_time',
+            'reservation_date' => 'required|date|after_or_equal:today',
+            'days_count' => 'required|integer|min:1|max:30',
             'guest_count' => 'required|integer|min:1',
             'user_id' => 'required|exists:users,id',
         ]);
 
-        // Check room availability
+        // Xonani topish
         $room = Room::find($request->room_id);
-        if (!$room->isAvailable($request->start_time, $request->end_time)) {
-            return back()->withErrors(['room_id' => 'Bu vaqtda xona band!']);
+        
+        // Xona mavjudligini tekshirish
+        if (!$room->isAvailableForDate($request->reservation_date, $request->days_count)) {
+            return back()->withErrors(['reservation_date' => 'Bu kunlarda xona band!']);
         }
 
-        // Create or find customer
+        // Mijozni yaratish yoki topish
         $customer = Customer::firstOrCreate(
             ['phone' => $request->customer_phone],
             ['name' => $request->customer_name, 'email' => $request->customer_email]
         );
 
-        // Calculate room charge
-        $startTime = new \DateTime($request->start_time);
-        $endTime = new \DateTime($request->end_time);
-        $hours = $endTime->diff($startTime)->h + ($endTime->diff($startTime)->i > 0 ? 1 : 0);
-        $roomCharge = $room->hourly_rate * $hours;
+        // Xona to'lovini hisoblash
+        $roomCharge = $room->daily_rate * $request->days_count;
 
-        // Create reservation
+        // Tugash sanasini hisoblash
+        $endDate = Carbon::parse($request->reservation_date)
+                        ->addDays($request->days_count - 1)
+                        ->format('Y-m-d');
+
+        // Rezervatsiya yaratish
         $reservation = Reservation::create([
             'customer_id' => $customer->id,
             'room_id' => $request->room_id,
             'user_id' => $request->user_id,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
+            'reservation_date' => $request->reservation_date,
+            'days_count' => $request->days_count,
+            'end_date' => $endDate,
             'guest_count' => $request->guest_count,
             'room_charge' => $roomCharge,
             'special_requests' => $request->special_requests,
             'status' => 'confirmed'
         ]);
 
-        // Update room status
-        $room->update(['status' => 'occupied']);
+        // Xona holatini yangilash (agar bugun boshlansa)
+        if (Carbon::parse($request->reservation_date)->isToday()) {
+            $room->update(['status' => 'occupied']);
+        }
 
         return redirect()->route('reservations.show', $reservation)
-            ->with('success', 'Rezervatsiya muvaffaqiyatli yaratildi!');
-    }
-    public function edit(Reservation $reservation)
-    {
-        return view('reservations.edit', compact('reservation'));
+                        ->with('success', 'Rezervatsiya muvaffaqiyatli yaratildi!');
     }
 
     public function show(Reservation $reservation)
     {
-        $reservation->load(['customer', 'room', 'waiter', 'orders.items.product']);
+        $reservation->load(['customer', 'room', 'user', 'orders.items.product', 'payments']);
         return view('reservations.show', compact('reservation'));
     }
+
+    public function edit(Reservation $reservation)
+    {
+        if ($reservation->status === 'completed' || $reservation->is_expired) {
+            return redirect()->route('reservations.show', $reservation)
+                           ->with('error', 'Bu rezervatsiyani tahrirlash mumkin emas!');
+        }
+
+        $rooms = Room::all();
+        $waiters = User::whereHas('role', function($q) {
+            $q->where('name', 'waiter');
+        })->where('is_active', true)->get();
+
+        return view('reservations.edit', compact('reservation', 'rooms', 'waiters'));
+    }
+
     public function update(Request $request, Reservation $reservation)
     {
         $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_phone' => 'required|string|max:20',
             'room_id' => 'required|exists:rooms,id',
-            'start_time' => 'required|date',
-            'end_time' => 'required|date|after:start_time',
+            'reservation_date' => 'required|date|after_or_equal:today',
+            'days_count' => 'required|integer|min:1|max:30',
             'guest_count' => 'required|integer|min:1',
-            'user_id' => 'required|exists:users,id',
-            'status' => 'required|in:pending,confirmed,checked_in,completed,cancelled',
-            'room_charge' => 'required|numeric|min:0',
+            'status' => 'required|in:confirmed,cancelled,completed',
         ]);
 
-        // Handle delete request
-        if ($request->delete) {
-            return $this->destroy($reservation);
-        }
-
-        // Update customer
+        // Mijoz ma'lumotlarini yangilash
         $reservation->customer->update([
             'name' => $request->customer_name,
             'phone' => $request->customer_phone,
             'email' => $request->customer_email,
         ]);
 
-        // Update reservation
-        $reservation->update($request->only([
-            'room_id',
-            'start_time',
-            'end_time',
-            'guest_count',
-            'user_id',
-            'status',
-            'room_charge',
-            'special_requests'
-        ]));
+        // Xona to'lovini qayta hisoblash
+        $room = Room::find($request->room_id);
+        $roomCharge = $room->daily_rate * $request->days_count;
+        $endDate = Carbon::parse($request->reservation_date)
+                        ->addDays($request->days_count - 1)
+                        ->format('Y-m-d');
+
+        // Rezervatsiyani yangilash
+        $reservation->update([
+            'room_id' => $request->room_id,
+            'reservation_date' => $request->reservation_date,
+            'days_count' => $request->days_count,
+            'end_date' => $endDate,
+            'guest_count' => $request->guest_count,
+            'room_charge' => $roomCharge,
+            'special_requests' => $request->special_requests,
+            'status' => $request->status,
+        ]);
 
         return redirect()->route('reservations.show', $reservation)
-            ->with('success', 'Rezervatsiya muvaffaqiyatli yangilandi!');
+                        ->with('success', 'Rezervatsiya muvaffaqiyatli yangilandi!');
+    }
+
+    public function checkAvailability(Request $request)
+    {
+        $room = Room::find($request->room_id);
+        $excludeId = $request->exclude_reservation_id ?? null;
+        
+        $isAvailable = $room->isAvailableForDate(
+            $request->date, 
+            $request->days_count ?? 1,
+            $excludeId  // Bu rezervatsiyani hisobga olmaslik
+        );
+        
+        return response()->json([
+            'available' => $isAvailable,
+            'daily_rate' => $room->daily_rate,
+            'total_charge' => $room->daily_rate * ($request->days_count ?? 1)
+        ]);
     }
 
     public function checkIn(Reservation $reservation)
@@ -146,24 +207,16 @@ class ReservationController extends Controller
         $reservation->update(['status' => 'completed']);
         $reservation->room->update(['status' => 'available']);
 
-        // Update customer stats
-        $customer = $reservation->customer;
-        $customer->increment('visit_count');
-        $customer->update(['last_visit' => today()]);
-
         return back()->with('success', 'Rezervatsiya tugallandi!');
     }
+
     public function destroy(Reservation $reservation)
     {
         if ($reservation->orders()->count() > 0) {
             return back()->withErrors(['error' => 'Buyurtmalari bo\'lgan rezervatsiyani o\'chirib bo\'lmaydi!']);
         }
 
-        // Update room status if it was occupied
-        if ($reservation->room->status === 'occupied') {
-            $reservation->room->update(['status' => 'available']);
-        }
-
+        $reservation->room->updateStatusBasedOnReservations();
         $reservation->delete();
 
         return redirect()->route('reservations.index')

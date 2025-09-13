@@ -1,120 +1,224 @@
 @extends('layouts.app')
 
-@section('title', 'Rezervatsiya Ma\'lumotlari')
-@section('page-title', 'Rezervatsiya #' . $reservation->reservation_number)
+@section('title', 'Rezervatsiya #' . $reservation->reservation_number)
+@section('page-title', 'Rezervatsiya Tafsilotlari')
 
 @section('content')
 <div class="row">
-    <!-- Reservation Details -->
-    <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Rezervatsiya Ma'lumotlari</h5>
-                <div>
-                    @if($reservation->status === 'confirmed')
-                        <form action="{{ route('reservations.checkin', $reservation) }}" method="POST" style="display:inline">
-                            @csrf
-                            <button type="submit" class="btn btn-success btn-sm">
-                                <i class="fas fa-user-check"></i> Keldi
-                            </button>
-                        </form>
+    <!-- Header Section -->
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0">Rezervatsiya #{{ $reservation->reservation_number }}</h4>
+                <div class="mt-2">
+                    @switch($reservation->status)
+                        @case('confirmed')
+                            <span class="badge bg-success fs-6">Tasdiqlangan</span>
+                            @break
+                        @case('checked_in')
+                            <span class="badge bg-info fs-6">Keldi</span>
+                            @break
+                        @case('completed')
+                            <span class="badge bg-secondary fs-6">Tugallangan</span>
+                            @break
+                        @case('cancelled')
+                            <span class="badge bg-danger fs-6">Bekor qilingan</span>
+                            @break
+                    @endswitch
+                    
+                    @if($reservation->is_active)
+                        <span class="badge bg-warning fs-6 ms-2">Hozir Aktiv</span>
                     @endif
-                    @if(in_array($reservation->status, ['confirmed', 'checked_in']))
-                        <a href="{{ route('orders.create', ['reservation_id' => $reservation->id]) }}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-utensils"></i> Buyurtma Berish
-                        </a>
+                    
+                    @if($reservation->is_expired)
+                        <span class="badge bg-dark fs-6 ms-2">Muddati O'tgan</span>
+                    @endif
+                </div>
+                <p class="text-muted mb-0 mt-1">
+                    Yaratilgan: {{ $reservation->created_at->format('d.m.Y H:i') }} 
+                    ({{ $reservation->user->name }} tomonidan)
+                </p>
+            </div>
+            <div>
+                <div class="btn-group">
+                    <a href="{{ route('reservations.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Orqaga
+                    </a>
+                    @if(!$reservation->is_expired && $reservation->status !== 'completed')
+                    <a href="{{ route('reservations.edit', $reservation) }}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Tahrirlash
+                    </a>
+                    @endif
+                    @if($reservation->status === 'confirmed')
+                    <form action="{{ route('reservations.checkin', $reservation) }}" method="POST" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-user-check"></i> Keldi
+                        </button>
+                    </form>
                     @endif
                     @if($reservation->status === 'checked_in')
-                        <form action="{{ route('reservations.complete', $reservation) }}" method="POST" style="display:inline">
-                            @csrf
-                            <button type="submit" class="btn btn-secondary btn-sm">
-                                <i class="fas fa-flag-checkered"></i> Tugallash
-                            </button>
-                        </form>
+                    <form action="{{ route('reservations.complete', $reservation) }}" method="POST" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-secondary">
+                            <i class="fas fa-flag-checkered"></i> Tugallash
+                        </button>
+                    </form>
                     @endif
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-lg-8">
+        <!-- Customer & Reservation Info -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Asosiy Ma'lumotlar</h5>
+            </div>
             <div class="card-body">
                 <div class="row">
+                    <!-- Customer Info -->
                     <div class="col-md-6">
-                        <table class="table table-borderless">
+                        <h6 class="border-bottom pb-2 mb-3">Mijoz Ma'lumotlari</h6>
+                        <table class="table table-sm table-borderless">
                             <tr>
-                                <th>Rezervatsiya №:</th>
-                                <td>{{ $reservation->reservation_number }}</td>
+                                <td class="fw-bold" width="40%">Ism:</td>
+                                <td>{{ $reservation->customer->name }}</td>
                             </tr>
                             <tr>
-                                <th>Mijoz:</th>
+                                <td class="fw-bold">Telefon:</td>
                                 <td>
-                                    <strong>{{ $reservation->customer->name }}</strong><br>
-                                    <small>{{ $reservation->customer->phone }}</small>
-                                    @if($reservation->customer->email)
-                                        <br><small>{{ $reservation->customer->email }}</small>
-                                    @endif
+                                    <a href="tel:{{ $reservation->customer->phone }}">
+                                        {{ $reservation->customer->phone }}
+                                    </a>
                                 </td>
                             </tr>
+                            @if($reservation->customer->email)
                             <tr>
-                                <th>Xona:</th>
+                                <td class="fw-bold">Email:</td>
                                 <td>
-                                    <strong>{{ $reservation->room->name_uz }}</strong><br>
-                                    <small>{{ $reservation->room->capacity }} kishi sig'imi</small>
+                                    <a href="mailto:{{ $reservation->customer->email }}">
+                                        {{ $reservation->customer->email }}
+                                    </a>
                                 </td>
                             </tr>
+                            @endif
                             <tr>
-                                <th>Ofitsiant:</th>
-                                <td>{{ $reservation->waiter->name }}</td>
+                                <td class="fw-bold">Mehmonlar:</td>
+                                <td>
+                                    <span class="badge bg-primary">{{ $reservation->guest_count }} kishi</span>
+                                </td>
                             </tr>
                         </table>
                     </div>
+                    
+                    <!-- Reservation Info -->
                     <div class="col-md-6">
-                        <table class="table table-borderless">
+                        <h6 class="border-bottom pb-2 mb-3">Rezervatsiya Ma'lumotlari</h6>
+                        <table class="table table-sm table-borderless">
                             <tr>
-                                <th>Boshlanish:</th>
-                                <td>{{ $reservation->start_time->format('d.m.Y H:i') }}</td>
+                                <td class="fw-bold" width="40%">Xona:</td>
+                                <td>
+                                    <span class="badge bg-info">{{ $reservation->room->name_uz }}</span>
+                                    <br><small class="text-muted">{{ $reservation->room->capacity }} kishilik</small>
+                                </td>
                             </tr>
                             <tr>
-                                <th>Tugash:</th>
-                                <td>{{ $reservation->end_time->format('d.m.Y H:i') }}</td>
+                                <td class="fw-bold">Boshlanish:</td>
+                                <td>
+                                    {{ $reservation->reservation_date->format('d.m.Y') }}
+                                    <br><small class="text-muted">{{ $reservation->reservation_date->format('l') }}</small>
+                                </td>
                             </tr>
                             <tr>
-                                <th>Muddat:</th>
-                                <td>{{ $reservation->getDuration() }} soat</td>
+                                <td class="fw-bold">Tugash:</td>
+                                <td>
+                                    {{ $reservation->end_date->format('d.m.Y') }}
+                                    <br><small class="text-muted">{{ $reservation->end_date->format('l') }}</small>
+                                </td>
                             </tr>
                             <tr>
-                                <th>Mehmonlar:</th>
-                                <td>{{ $reservation->guest_count }} kishi</td>
+                                <td class="fw-bold">Davomiyligi:</td>
+                                <td>
+                                    <span class="badge bg-success">{{ $reservation->days_count }} kun</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Kunlik narx:</td>
+                                <td>{{ number_format($reservation->room->daily_rate) }} so'm</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Mas'ul:</td>
+                                <td>{{ $reservation->user->name }}</td>
                             </tr>
                         </table>
                     </div>
                 </div>
-
+                
                 @if($reservation->special_requests)
-                <div class="alert alert-info">
-                    <strong><i class="fas fa-comment"></i> Maxsus So'rovlar:</strong><br>
-                    {{ $reservation->special_requests }}
+                <div class="mt-3">
+                    <h6 class="border-bottom pb-2 mb-3">Maxsus So'rovlar</h6>
+                    <div class="alert alert-info">
+                        <i class="fas fa-comment"></i>
+                        {{ $reservation->special_requests }}
+                    </div>
                 </div>
                 @endif
             </div>
         </div>
 
-        <!-- Orders -->
-        @if($reservation->orders->count() > 0)
+        <!-- Room Amenities -->
+        @if($reservation->room->amenities && count($reservation->room->amenities) > 0)
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-utensils"></i> Buyurtmalar</h5>
+                <h5 class="mb-0"><i class="fas fa-star"></i> Xona Imkoniyatlari</h5>
             </div>
             <div class="card-body">
+                <div class="row">
+                    @foreach($reservation->room->amenities as $amenity)
+                    <div class="col-md-3 col-sm-6 mb-2">
+                        <span class="badge bg-light text-dark border w-100 py-2">
+                            <i class="fas fa-check-circle text-success me-1"></i>
+                            {{ $amenity }}
+                        </span>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- Orders Section -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-utensils"></i> Buyurtmalar</h5>
+                @if($reservation->status === 'confirmed' || $reservation->status === 'checked_in')
+                <a href="{{ route('orders.create', ['reservation_id' => $reservation->id]) }}" 
+                   class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Yangi Buyurtma
+                </a>
+                @endif
+            </div>
+            <div class="card-body">
+                @if($reservation->orders->count() > 0)
                 @foreach($reservation->orders as $order)
                 <div class="border rounded p-3 mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6>Buyurtma #{{ $order->order_number }}</h6>
-                        <span class="badge bg-{{ $order->status === 'completed' ? 'success' : 'info' }}">
-                            @if($order->status === 'pending') Kutilmoqda
-                            @elseif($order->status === 'preparing') Tayyorlanmoqda
-                            @elseif($order->status === 'ready') Tayyor
-                            @elseif($order->status === 'served') Berildi
-                            @else Tugallangan
-                            @endif
-                        </span>
+                        <h6 class="mb-0">Buyurtma #{{ $order->order_number ?? $order->id }}</h6>
+                        <div>
+                            <span class="badge bg-{{ $order->status === 'completed' ? 'success' : ($order->status === 'preparing' ? 'warning' : 'info') }}">
+                                @switch($order->status)
+                                    @case('pending') Kutilmoqda @break
+                                    @case('preparing') Tayyorlanmoqda @break
+                                    @case('ready') Tayyor @break
+                                    @case('served') Xizmat qilindi @break
+                                    @default Tugallangan
+                                @endswitch
+                            </span>
+                            <small class="text-muted ms-2">{{ $order->created_at->format('d.m.Y H:i') }}</small>
+                        </div>
                     </div>
                     
                     <div class="table-responsive">
@@ -128,19 +232,21 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($order->items as $item)
-                                <tr>
-                                    <td>
-                                        {{ $item->product->name_uz }}
-                                        @if($item->special_instructions)
-                                            <br><small class="text-muted">{{ $item->special_instructions }}</small>
-                                        @endif
-                                    </td>
-                                    <td>{{ $item->quantity }}</td>
-                                    <td>{{ number_format($item->unit_price) }}</td>
-                                    <td>{{ number_format($item->total_price) }}</td>
-                                </tr>
-                                @endforeach
+                                @if(isset($order->items))
+                                    @foreach($order->items as $item)
+                                    <tr>
+                                        <td>
+                                            {{ $item->product->name_uz ?? $item->product->name }}
+                                            @if($item->special_instructions)
+                                                <br><small class="text-muted">{{ $item->special_instructions }}</small>
+                                            @endif
+                                        </td>
+                                        <td>{{ $item->quantity }}</td>
+                                        <td>{{ number_format($item->unit_price) }}</td>
+                                        <td>{{ number_format($item->total_price) }}</td>
+                                    </tr>
+                                    @endforeach
+                                @endif
                             </tbody>
                             <tfoot>
                                 <tr>
@@ -152,39 +258,70 @@
                     </div>
                 </div>
                 @endforeach
+                @else
+                <div class="text-center py-4">
+                    <i class="fas fa-utensils fa-2x text-muted mb-3"></i>
+                    <h6 class="text-muted">Hali buyurtmalar yo'q</h6>
+                    @if($reservation->status === 'confirmed' || $reservation->status === 'checked_in')
+                    <a href="{{ route('orders.create', ['reservation_id' => $reservation->id]) }}" 
+                       class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Birinchi Buyurtma Yaratish
+                    </a>
+                    @endif
+                </div>
+                @endif
             </div>
         </div>
-        @endif
     </div>
 
-    <!-- Summary Card -->
-    <div class="col-md-4">
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Financial Summary -->
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-calculator"></i> Hisob-kitob</h5>
+                <h5 class="mb-0"><i class="fas fa-calculator"></i> Moliyaviy Hisob-kitob</h5>
             </div>
             <div class="card-body">
-                <table class="table table-borderless">
+                <table class="table table-sm table-borderless">
                     <tr>
-                        <td>Xona narxi:</td>
-                        <td class="text-end">{{ number_format($reservation->room_charge) }} so'm</td>
+                        <td>Xona to'lovi:</td>
+                        <td class="text-end fw-bold">{{ number_format($reservation->room_charge) }} so'm</td>
                     </tr>
-                    @if($reservation->orders->count() > 0)
                     <tr>
-                        <td>Buyurtmalar:</td>
-                        <td class="text-end">{{ number_format($reservation->orders->sum('total_amount')) }} so'm</td>
+                        <td>Ovqat buyurtmalari:</td>
+                        <td class="text-end fw-bold">{{ number_format($reservation->orders->sum('total_amount')) }} so'm</td>
                     </tr>
-                    @endif
                     <tr class="border-top">
-                        <th>Umumiy summa:</th>
-                        <th class="text-end">{{ number_format($reservation->getTotalAmount()) }} so'm</th>
+                        <td class="fw-bold">Jami summa:</td>
+                        <td class="text-end fw-bold text-primary fs-5">
+                            {{ number_format($reservation->getTotalAmount()) }} so'm
+                        </td>
                     </tr>
                 </table>
-
+                
+                @if($reservation->payments && $reservation->payments->count() > 0)
+                <hr>
+                <h6>To'lovlar tarixi:</h6>
+                <div class="payment-history" style="max-height: 200px; overflow-y: auto;">
+                    @foreach($reservation->payments as $payment)
+                    <div class="d-flex justify-content-between align-items-center py-1">
+                        <div>
+                            <small>{{ $payment->created_at->format('d.m.Y H:i') }}</small>
+                            <br><span class="badge bg-{{ $payment->status === 'completed' ? 'success' : 'warning' }}">
+                                {{ $payment->payment_method ?? 'cash' }}
+                            </span>
+                        </div>
+                        <strong>{{ number_format($payment->amount) }} so'm</strong>
+                    </div>
+                    @endforeach
+                </div>
+                @endif
+                
                 @if(in_array($reservation->status, ['checked_in', 'completed']))
-                <div class="d-grid">
-                    <a href="{{ route('payments.create', ['reservation_id' => $reservation->id]) }}" class="btn btn-success">
-                        <i class="fas fa-credit-card"></i> To'lov Qabul Qilish
+                <div class="mt-3">
+                    <a href="{{ route('payments.create', ['reservation_id' => $reservation->id]) }}" 
+                       class="btn btn-success w-100">
+                        <i class="fas fa-credit-card"></i> To'lov Qilish
                     </a>
                 </div>
                 @endif
@@ -201,34 +338,40 @@
                     <div class="timeline-item">
                         <div class="timeline-marker bg-primary"></div>
                         <div class="timeline-content">
-                            <h6>Yaratildi</h6>
-                            <small>{{ $reservation->created_at->format('d.m.Y H:i') }}</small>
+                            <h6 class="mb-1">Rezervatsiya yaratildi</h6>
+                            <small class="text-muted">
+                                {{ $reservation->created_at->format('d.m.Y H:i') }}
+                                <br>{{ $reservation->user->name }} tomonidan
+                            </small>
                         </div>
                     </div>
-                    @if($reservation->status !== 'pending')
+                    
+                    @if($reservation->status !== 'confirmed')
                     <div class="timeline-item">
                         <div class="timeline-marker bg-info"></div>
                         <div class="timeline-content">
-                            <h6>Tasdiqlandi</h6>
-                            <small>{{ $reservation->updated_at->format('d.m.Y H:i') }}</small>
+                            <h6 class="mb-1">Tasdiqlandi</h6>
+                            <small class="text-muted">{{ $reservation->updated_at->format('d.m.Y H:i') }}</small>
                         </div>
                     </div>
                     @endif
+                    
                     @if(in_array($reservation->status, ['checked_in', 'completed']))
                     <div class="timeline-item">
                         <div class="timeline-marker bg-success"></div>
                         <div class="timeline-content">
-                            <h6>Mijoz keldi</h6>
-                            <small>{{ $reservation->start_time->format('d.m.Y H:i') }}</small>
+                            <h6 class="mb-1">Mijoz keldi</h6>
+                            <small class="text-muted">{{ $reservation->reservation_date->format('d.m.Y') }}</small>
                         </div>
                     </div>
                     @endif
+                    
                     @if($reservation->status === 'completed')
                     <div class="timeline-item">
                         <div class="timeline-marker bg-secondary"></div>
                         <div class="timeline-content">
-                            <h6>Tugallandi</h6>
-                            <small>{{ $reservation->end_time->format('d.m.Y H:i') }}</small>
+                            <h6 class="mb-1">Tugallandi</h6>
+                            <small class="text-muted">{{ $reservation->end_date->format('d.m.Y') }}</small>
                         </div>
                     </div>
                     @endif
@@ -237,9 +380,7 @@
         </div>
     </div>
 </div>
-@endsection
 
-@section('scripts')
 <style>
 .timeline {
     position: relative;
@@ -272,6 +413,19 @@
 
 .timeline-content h6 {
     margin-bottom: 5px;
+}
+
+.payment-history::-webkit-scrollbar {
+    width: 4px;
+}
+
+.payment-history::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.payment-history::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 2px;
 }
 </style>
 @endsection

@@ -97,7 +97,7 @@
                     </div>
                     <div class="col-6">
                         <small class="text-muted">Soatlik narx:</small>
-                        <br><strong>{{ number_format($room->hourly_rate) }} so'm</strong>
+                        <br><strong>{{ number_format($room->daily_rate) }} so'm</strong>
                     </div>
                 </div>
                 

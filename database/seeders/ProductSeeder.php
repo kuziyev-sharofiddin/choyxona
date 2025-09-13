@@ -25,7 +25,7 @@ class ProductSeeder extends Seeder
             // Hot Drinks
             [
                 'name' => 'Green Tea',
-                'name_uz' => 'Kok Choy',
+                'name_uz' => 'Ko\'k Choy',
                 'description' => 'Traditional Uzbek green tea',
                 'description_uz' => 'An\'anaviy O\'zbek kok choy',
                 'price' => 8000,
@@ -55,7 +55,7 @@ class ProductSeeder extends Seeder
             // Cold Drinks
             [
                 'name' => 'Ayran',
-                'name_uz' => 'Ayran',
+                'name_uz' => 'Ayron',
                 'description' => 'Traditional yogurt drink',
                 'description_uz' => 'An\'anaviy yogurt ichimlik',
                 'price' => 12000,
@@ -87,7 +87,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'name' => 'Shashlik',
-                'name_uz' => 'Shashlyk',
+                'name_uz' => 'Shashlik',
                 'description' => 'Grilled meat skewers',
                 'description_uz' => 'Panjara ustida pishirilgan go\'sht',
                 'price' => 45000,
@@ -152,7 +152,7 @@ class ProductSeeder extends Seeder
             // Desserts
             [
                 'name' => 'Halva',
-                'name_uz' => 'Halva',
+                'name_uz' => 'Holva',
                 'description' => 'Traditional sweet dessert',
                 'description_uz' => 'An\'anaviy shirin desert',
                 'price' => 12000,

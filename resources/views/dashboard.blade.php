@@ -1,4 +1,4 @@
-<!-- resources/views/dashboard.blade.php -->
+{{-- resources/views/dashboard.blade.php --}}
 @extends('layouts.app')
 
 @section('title', 'Dashboard')
@@ -139,13 +139,15 @@
                                         <h6 class="card-title mb-1">{{ $room->name_uz }}</h6>
                                         <p class="card-text small text-muted mb-2">
                                             <i class="fas fa-users"></i> {{ $room->capacity }} kishi<br>
-                                            <i class="fas fa-money-bill"></i> {{ number_format($room->hourly_rate) }} so'm/soat
+                                            <i class="fas fa-money-bill"></i> {{ number_format($room->daily_rate) }} so'm/kun
                                         </p>
-                                        @if($room->current_reservation)
-                                        <small class="text-primary">
-                                            <i class="fas fa-clock"></i> 
-                                            {{ $room->current_reservation->end_time->format('H:i') }} gacha band
-                                        </small>
+                                        @if($room->reservations->count() > 0)
+                                            @php $currentRes = $room->reservations->first(); @endphp
+                                            <small class="text-primary">
+                                                <i class="fas fa-calendar"></i> 
+                                                {{ $currentRes->end_date->format('d.m.Y') }} gacha band
+                                                <br><strong>{{ $currentRes->customer->name }}</strong>
+                                            </small>
                                         @endif
                                     </div>
                                     <div class="text-end">
@@ -201,16 +203,16 @@
                             @forelse($recentOrders as $order)
                             <tr onclick="window.location.href='{{ route('orders.show', $order) }}'" style="cursor: pointer;">
                                 <td>
-                                    <strong>{{ $order->order_number }}</strong>
-                                    <br><small class="text-muted">{{ $order->order_time->format('H:i') }}</small>
+                                    <strong>{{ $order->order_number ?? '#' . $order->id }}</strong>
+                                    <br><small class="text-muted">{{ $order->created_at->format('H:i') }}</small>
                                 </td>
                                 <td>
-                                    {{ $order->customer->name }}
-                                    <br><small class="text-muted">{{ $order->reservation->room->name_uz }}</small>
+                                    {{ $order->reservation->customer->name ?? 'N/A' }}
+                                    <br><small class="text-muted">{{ $order->reservation->room->name_uz ?? 'N/A' }}</small>
                                 </td>
                                 <td>
                                     <strong>{{ number_format($order->total_amount) }} so'm</strong>
-                                    <br><small class="text-muted">{{ $order->items->count() }} mahsulot</small>
+                                    <br><small class="text-muted">{{ $order->items->count() ?? 0 }} mahsulot</small>
                                 </td>
                                 <td>
                                     @if($order->status == 'pending')
@@ -258,7 +260,7 @@
                     <table class="table table-hover table-sm">
                         <thead>
                             <tr>
-                                <th>Vaqt</th>
+                                <th>Sana</th>
                                 <th>Mijoz</th>
                                 <th>Xona</th>
                                 <th>Holat</th>
@@ -268,8 +270,8 @@
                             @forelse($todayReservations as $reservation)
                             <tr onclick="window.location.href='{{ route('reservations.show', $reservation) }}'" style="cursor: pointer;">
                                 <td>
-                                    <strong>{{ $reservation->start_time->format('H:i') }}</strong>
-                                    <br><small class="text-muted">{{ $reservation->getDuration() }}h</small>
+                                    <strong>{{ $reservation->reservation_date->format('d.m') }}</strong>
+                                    <br><small class="text-muted">{{ $reservation->days_count }} kun</small>
                                 </td>
                                 <td>
                                     {{ $reservation->customer->name }}
@@ -280,14 +282,14 @@
                                     <br><small class="text-muted">{{ number_format($reservation->room_charge) }} so'm</small>
                                 </td>
                                 <td>
-                                    @if($reservation->status == 'pending')
-                                        <span class="badge bg-warning">Kutilmoqda</span>
-                                    @elseif($reservation->status == 'confirmed')
+                                    @if($reservation->status == 'confirmed')
                                         <span class="badge bg-info">Tasdiqlangan</span>
                                     @elseif($reservation->status == 'checked_in')
                                         <span class="badge bg-success">Keldi</span>
-                                    @else
+                                    @elseif($reservation->status == 'completed')
                                         <span class="badge bg-secondary">Tugallangan</span>
+                                    @else
+                                        <span class="badge bg-warning">Kutilmoqda</span>
                                     @endif
                                 </td>
                             </tr>
@@ -313,6 +315,52 @@
         </div>
     </div>
 </div>
+
+<!-- Today's Schedule -->
+@if(isset($todayStarting) && $todayStarting->count() > 0 || isset($todayEnding) && $todayEnding->count() > 0)
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-calendar-check"></i> Bugungi Jadval</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @if(isset($todayStarting) && $todayStarting->count() > 0)
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-2">Boshlanadigan Rezervatsiyalar</h6>
+                        @foreach($todayStarting as $reservation)
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                            <div>
+                                <strong>{{ $reservation->customer->name }}</strong>
+                                <br><small class="text-muted">{{ $reservation->room->name_uz }} - {{ $reservation->days_count }} kun</small>
+                            </div>
+                            <span class="badge bg-success">Yangi</span>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+
+                    @if(isset($todayEnding) && $todayEnding->count() > 0)
+                    <div class="col-md-6">
+                        <h6 class="text-warning mb-2">Tugaydigan Rezervatsiyalar</h6>
+                        @foreach($todayEnding as $reservation)
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                            <div>
+                                <strong>{{ $reservation->customer->name }}</strong>
+                                <br><small class="text-muted">{{ $reservation->room->name_uz }} - Check-out</small>
+                            </div>
+                            <span class="badge bg-warning">Tugaydi</span>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 <!-- Room Quick Action Modal -->
 <div class="modal fade" id="roomModal" tabindex="-1">
@@ -360,24 +408,21 @@ function viewRoomDetails() {
 
 function setMaintenance() {
     if(confirm('Xonani ta\'mirga jo\'natishni xohlaysizmi?')) {
-        showLoading();
         fetch(`/rooms/${selectedRoomId}/maintenance`, {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 'Content-Type': 'application/json'
             }
         })
         .then(response => response.json())
         .then(data => {
-            hideLoading();
             if(data.message) {
                 alert(data.message);
             }
             location.reload();
         })
         .catch(error => {
-            hideLoading();
             console.error('Error:', error);
             alert('Xatolik yuz berdi');
         });
@@ -411,44 +456,47 @@ function updateClock() {
         hour: '2-digit',
         minute: '2-digit'
     });
-    document.querySelector('.me-3.text-muted').innerHTML = 
-        '<i class="fas fa-clock me-1"></i>' + timeString;
+    const clockElement = document.querySelector('.me-3.text-muted');
+    if (clockElement) {
+        clockElement.innerHTML = '<i class="fas fa-clock me-1"></i>' + timeString;
+    }
 }
 
 // Update clock every minute
 setInterval(updateClock, 60000);
 
 // Animate counter numbers on page load
-$(document).ready(function() {
-    $('.stats-card h3').each(function() {
-        const $this = $(this);
-        const text = $this.text();
+document.addEventListener('DOMContentLoaded', function() {
+    const statsCards = document.querySelectorAll('.stats-card h3');
+    statsCards.forEach(function(element) {
+        const text = element.textContent;
         const number = parseInt(text.replace(/[^\d]/g, ''));
         
         if (!isNaN(number) && number > 0) {
-            $this.text('0');
-            $this.prop('Counter', 0).animate({
-                Counter: number
-            }, {
-                duration: 2000,
-                easing: 'swing',
-                step: function(now) {
-                    $this.text(Math.ceil(now).toLocaleString() + (text.includes('so\'m') ? ' so\'m' : ''));
+            let current = 0;
+            const increment = number / 50;
+            const timer = setInterval(function() {
+                current += increment;
+                if (current >= number) {
+                    current = number;
+                    clearInterval(timer);
                 }
-            });
+                element.textContent = Math.ceil(current).toLocaleString() + (text.includes('so\'m') ? ' so\'m' : '');
+            }, 40);
         }
     });
+    
+    // Add hover effects to cards
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(function(card) {
+        card.addEventListener('mouseenter', function() {
+            this.classList.add('shadow-lg');
+        });
+        card.addEventListener('mouseleave', function() {
+            this.classList.remove('shadow-lg');
+        });
+    });
 });
-
-// Add hover effects to cards
-$('.card').hover(
-    function() {
-        $(this).addClass('shadow-lg');
-    },
-    function() {
-        $(this).removeClass('shadow-lg');
-    }
-);
 
 // Notification system
 function showNotification(message, type = 'success') {
@@ -463,19 +511,20 @@ function showNotification(message, type = 'success') {
         </div>
     `;
     
-    $('body').append(notification);
+    document.body.insertAdjacentHTML('beforeend', notification);
     
     // Auto hide after 5 seconds
     setTimeout(function() {
-        $('.alert').fadeOut();
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            alert.style.opacity = '0';
+            setTimeout(function() {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            }, 300);
+        });
     }, 5000);
-}
-
-// WebSocket connection for real-time updates (if needed)
-// This is a placeholder for future WebSocket implementation
-function connectWebSocket() {
-    // WebSocket logic would go here
-    console.log('WebSocket connection placeholder');
 }
 </script>
 
