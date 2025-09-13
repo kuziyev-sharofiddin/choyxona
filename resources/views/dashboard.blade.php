@@ -70,7 +70,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="card-title mb-1">Bo'sh Xonalar</h6>
-                        <h3 class="mb-0">{{ $availableRooms }}/{{ $totalRooms }}</h3>
+                        <h3 class="mb-0">{{$availableRooms }}</h3>
                         <small class="opacity-75">
                             {{ round(($availableRooms / $totalRooms) * 100) }}% bo'sh
                         </small>

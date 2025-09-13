@@ -74,7 +74,7 @@
                         <tbody>
                             @foreach($customer->reservations->take(10) as $reservation)
                             <tr onclick="window.location.href='{{ route('reservations.show', $reservation) }}'" style="cursor: pointer;">
-                                <td>{{ $reservation->start_time->format('d.m.Y H:i') }}</td>
+                                <td>{{ $reservation->reservation_date->format('d.m.Y H:i') }}</td>
                                 <td>{{ $reservation->room->name_uz }}</td>
                                 <td>{{ $reservation->guest_count }} kishi</td>
                                 <td>{{ number_format($reservation->getTotalAmount()) }} so'm</td>
