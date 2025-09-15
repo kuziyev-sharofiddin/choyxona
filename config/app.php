@@ -69,6 +69,9 @@ return [
     | ahead and set this to a sensible default for you out of the box.
     |
     */
+    'waiter_commission_rate' => 0.20, // 10%
+    'tax_rate' => 0.00, // 0% (removed)
+    'currency' => 'UZS',
 
     'timezone' => 'Asia/Tashkent',
 

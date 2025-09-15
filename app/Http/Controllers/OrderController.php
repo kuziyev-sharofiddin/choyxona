@@ -57,6 +57,8 @@ class OrderController extends Controller
             'customer_id' => $reservation->customer_id,
             'waiter_id' => auth()->id(),
             'subtotal' => 0,
+            'tax_amount' => 0, // Set to 0
+            'waiter_commission' => 0, // Will be calculated
             'total_amount' => 0,
             'discount_amount' => $request->discount_amount ?? 0,
             'notes' => $request->notes,

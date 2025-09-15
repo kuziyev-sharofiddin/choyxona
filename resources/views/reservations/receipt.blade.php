@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="uz">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +11,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Courier New', monospace;
             font-size: 12px;
@@ -19,7 +20,7 @@
             background: #fff;
             padding: 10px;
         }
-        
+
         .receipt {
             max-width: 300px;
             margin: 0 auto;
@@ -27,45 +28,45 @@
             padding: 15px;
             border: 1px solid #ddd;
         }
-        
+
         .header {
             text-align: center;
             margin-bottom: 15px;
             border-bottom: 2px solid #000;
             padding-bottom: 10px;
         }
-        
+
         .header h1 {
             font-size: 18px;
             font-weight: bold;
             margin-bottom: 5px;
         }
-        
+
         .header p {
             font-size: 11px;
             margin: 2px 0;
         }
-        
+
         .section {
             margin-bottom: 12px;
             border-bottom: 1px dashed #666;
             padding-bottom: 8px;
         }
-        
+
         .section:last-child {
             border-bottom: none;
         }
-        
+
         .row {
             display: flex;
             justify-content: space-between;
             margin: 3px 0;
         }
-        
+
         .row.bold {
             font-weight: bold;
         }
-        
+
         .row.total {
             font-weight: bold;
             font-size: 14px;
@@ -73,25 +74,25 @@
             padding-top: 5px;
             margin-top: 8px;
         }
-        
+
         .item {
             margin: 5px 0;
         }
-        
+
         .item-name {
             font-weight: bold;
         }
-        
+
         .item-details {
             display: flex;
             justify-content: space-between;
             font-size: 11px;
         }
-        
+
         .center {
             text-align: center;
         }
-        
+
         .footer {
             text-align: center;
             margin-top: 15px;
@@ -99,37 +100,39 @@
             padding-top: 10px;
             font-size: 10px;
         }
-        
+
         .thank-you {
             font-size: 14px;
             font-weight: bold;
             margin: 10px 0;
         }
-        
+
         @media print {
             body {
                 padding: 0;
             }
-            
+
             .receipt {
                 border: none;
                 box-shadow: none;
             }
-            
+
             .no-print {
                 display: none;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="receipt">
         <!-- Header -->
         <div class="header">
-            <h1>CHOYXONA</h1>
+            <h1>AKA-UKALAR</h1>
             <p>Boshqaruv Tizimi</p>
-            <p>Tel: +998 90 123 45 67</p>
-            <p>Manzil: Toshkent, O'zbekiston</p>
+            <p>Tel: +998 91 656 75 80</p>
+            <p>Tel: +998 91 656 75 84</p>
+            <p>Farg'ona, Boltako'l</p>
         </div>
 
         <!-- Receipt Info -->
@@ -174,7 +177,7 @@
             </div>
             <div class="row">
                 <span>Vaqt:</span>
-                <span>{{ $reservation->start_time->format('d.m.Y H:i') }}</span>
+                <span>{{ $reservation->reservation_date->format('d.m.Y H:i') }}</span>
             </div>
             <div class="row">
                 <span>Muddat:</span>
@@ -196,46 +199,44 @@
             <div class="row bold">
                 <span>BUYURTMA MAHSULOTLARI</span>
             </div>
-            
+
             @foreach($reservation->orders as $order)
-                @foreach($order->items as $item)
-                <div class="item">
-                    <div class="item-name">{{ $item->product->name_uz }}</div>
-                    <div class="item-details">
-                        <span>{{ $item->quantity }} x {{ number_format($item->unit_price) }}</span>
-                        <span>{{ number_format($item->total_price) }} so'm</span>
-                    </div>
-                    @if($item->special_instructions)
-                    <div style="font-size: 10px; font-style: italic; color: #666;">
-                        * {{ $item->special_instructions }}
-                    </div>
-                    @endif
+            @foreach($order->items as $item)
+            <div class="item">
+                <div class="item-name">{{ $item->product->name_uz }}</div>
+                <div class="item-details">
+                    <span>{{ $item->quantity }} x {{ number_format($item->unit_price) }}</span>
+                    <span>{{ number_format($item->total_price) }} so'm</span>
                 </div>
-                @endforeach
-                
-                <!-- Order Summary -->
-                <div style="margin: 8px 0; font-size: 11px;">
-                    <div class="row">
-                        <span>Mahsulotlar:</span>
-                        <span>{{ number_format($order->subtotal) }} so'm</span>
-                    </div>
-                    @if($order->tax_amount > 0)
-                    <div class="row">
-                        <span>Soliq (12%):</span>
-                        <span>{{ number_format($order->tax_amount) }} so'm</span>
-                    </div>
-                    @endif
-                    @if($order->discount_amount > 0)
-                    <div class="row">
-                        <span>Chegirma:</span>
-                        <span>-{{ number_format($order->discount_amount) }} so'm</span>
-                    </div>
-                    @endif
-                    <div class="row bold">
-                        <span>Buyurtma jami:</span>
-                        <span>{{ number_format($order->total_amount) }} so'm</span>
-                    </div>
+                @if($item->special_instructions)
+                <div style="font-size: 10px; font-style: italic; color: #666;">
+                    * {{ $item->special_instructions }}
                 </div>
+                @endif
+            </div>
+            @endforeach
+
+            <!-- Order Summary -->
+            <div style="margin: 8px 0; font-size: 11px;">
+                <div class="row">
+                    <span>Mahsulotlar:</span>
+                    <span>{{ number_format($order->subtotal) }} so'm</span>
+                </div>
+                <div class="row">
+                    <span>Ofitsiant (10%):</span>
+                    <span>{{ number_format($order->waiter_commission ?? $order->subtotal * 0.10) }} so'm</span>
+                </div>
+                @if($order->discount_amount > 0)
+                <div class="row">
+                    <span>Chegirma:</span>
+                    <span>-{{ number_format($order->discount_amount) }} so'm</span>
+                </div>
+                @endif
+                <div class="row bold">
+                    <span>Buyurtma jami:</span>
+                    <span>{{ number_format($order->total_amount) }} so'm</span>
+                </div>
+            </div>
             @endforeach
         </div>
         @endif
@@ -291,12 +292,12 @@
     <script>
         // Auto print when page loads (optional)
         // window.onload = function() { window.print(); }
-        
+
         function downloadPDF() {
             // This would integrate with a PDF library
             alert('PDF funksiyasi keyingi versiyada qo\'shiladi');
         }
-        
+
         // Prevent accidental navigation away
         window.addEventListener('beforeunload', function(e) {
             if (!window.printed) {
@@ -304,11 +305,12 @@
                 e.returnValue = '';
             }
         });
-        
+
         // Track if printed
         window.addEventListener('afterprint', function() {
             window.printed = true;
         });
     </script>
 </body>
+
 </html>

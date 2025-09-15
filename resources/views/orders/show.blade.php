@@ -53,15 +53,15 @@
                                 <th>Holat:</th>
                                 <td>
                                     @if($order->status === 'pending')
-                                        <span class="badge bg-warning">Kutilmoqda</span>
+                                    <span class="badge bg-warning">Kutilmoqda</span>
                                     @elseif($order->status === 'preparing')
-                                        <span class="badge bg-info">Tayyorlanmoqda</span>
+                                    <span class="badge bg-info">Tayyorlanmoqda</span>
                                     @elseif($order->status === 'ready')
-                                        <span class="badge bg-success">Tayyor</span>
+                                    <span class="badge bg-success">Tayyor</span>
                                     @elseif($order->status === 'served')
-                                        <span class="badge bg-primary">Berildi</span>
+                                    <span class="badge bg-primary">Berildi</span>
                                     @else
-                                        <span class="badge bg-secondary">Tugallangan</span>
+                                    <span class="badge bg-secondary">Tugallangan</span>
                                     @endif
                                 </td>
                             </tr>
@@ -105,7 +105,7 @@
                                 <td>
                                     <strong>{{ $item->product->name_uz }}</strong>
                                     @if($item->special_instructions)
-                                        <br><small class="text-danger">{{ $item->special_instructions }}</small>
+                                    <br><small class="text-danger">{{ $item->special_instructions }}</small>
                                     @endif
                                 </td>
                                 <td>{{ $item->product->category->name_uz }}</td>
@@ -139,8 +139,8 @@
                         <td class="text-end">{{ number_format($order->subtotal) }} so'm</td>
                     </tr>
                     <tr>
-                        <td>Soliq (12%):</td>
-                        <td class="text-end">{{ number_format($order->tax_amount) }} so'm</td>
+                        <td>Ofitsiant komissiyasi (10%):</td>
+                        <td class="text-end">{{ number_format($order->waiter_commission ?? $order->subtotal * 0.10) }} so'm</td>
                     </tr>
                     @if($order->discount_amount > 0)
                     <tr>
@@ -164,11 +164,11 @@
                 <p><strong>Mahsulotlar soni:</strong> {{ $order->items->count() }}</p>
                 <p><strong>Jami miqdor:</strong> {{ $order->items->sum('quantity') }} dona</p>
                 <p><strong>O'rtacha narx:</strong> {{ number_format($order->total_amount / $order->items->sum('quantity')) }} so'm</p>
-                
+
                 @php
-                    $totalPrepTime = $order->items->sum(function($item) {
-                        return $item->product->preparation_time * $item->quantity;
-                    });
+                $totalPrepTime = $order->items->sum(function($item) {
+                return $item->product->preparation_time * $item->quantity;
+                });
                 @endphp
                 <p><strong>Taxminiy vaqt:</strong> ~{{ $totalPrepTime }} daqiqa</p>
             </div>
@@ -209,31 +209,33 @@
 
 @section('scripts')
 <script>
-function updateOrderStatus() {
-    new bootstrap.Modal(document.getElementById('statusModal')).show();
-}
+    function updateOrderStatus() {
+        new bootstrap.Modal(document.getElementById('statusModal')).show();
+    }
 
-function saveStatus() {
-    const status = document.getElementById('newStatus').value;
-    
-    fetch(`/orders/{{ $order->id }}/status`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({ status: status })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Xatolik yuz berdi');
-    });
-}
+    function saveStatus() {
+        const status = document.getElementById('newStatus').value;
+
+        fetch(`/orders/{{ $order->id }}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    status: status
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Xatolik yuz berdi');
+            });
+    }
 </script>
 @endsection

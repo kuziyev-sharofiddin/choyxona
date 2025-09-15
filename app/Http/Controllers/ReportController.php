@@ -159,12 +159,14 @@ class ReportController extends Controller
         $startDate = now()->subDays($period);
 
         $employeeStats = User::select('users.*')
-            ->join('orders', 'users.id', '=', 'orders.waiter_id')
-            ->where('orders.order_time', '>=', $startDate)
-            ->groupBy('users.id')
-            ->selectRaw('COUNT(orders.id) as total_orders, SUM(orders.total_amount) as total_sales')
-            ->orderBy('total_sales', 'desc')
-            ->get();
+                        ->join('orders', 'users.id', '=', 'orders.waiter_id')
+                        ->where('orders.order_time', '>=', $startDate)
+                        ->groupBy('users.id')
+                        ->selectRaw('COUNT(orders.id) as total_orders')
+                        ->selectRaw('SUM(orders.total_amount) as total_sales')
+                        ->selectRaw('SUM(orders.waiter_commission) as total_commission') // Add commission
+                        ->orderBy('total_sales', 'desc')
+                        ->get();
 
         return view('reports.employees', compact('employeeStats', 'period'));
     }

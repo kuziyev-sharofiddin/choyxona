@@ -34,6 +34,7 @@
                         <th>Lavozim</th>
                         <th>Buyurtmalar</th>
                         <th>Jami Sotuv</th>
+                        <th>Komissiya</th> <!-- Add this column -->
                         <th>O'rtacha Sotuv</th>
                         <th>Samaradorlik</th>
                     </tr>
@@ -52,6 +53,7 @@
                         <td><span class="badge bg-info">{{ $employee->role->display_name }}</span></td>
                         <td><span class="badge bg-primary">{{ $employee->total_orders }}</span></td>
                         <td><strong>{{ number_format($employee->total_sales) }} so'm</strong></td>
+                        <td><strong class="text-success">{{ number_format($employee->total_commission ?? 0) }} so'm</strong></td> <!-- Add this -->
                         <td>{{ $employee->total_orders > 0 ? number_format($employee->total_sales / $employee->total_orders) : 0 }} so'm</td>
                         <td>
                             @php

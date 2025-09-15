@@ -141,13 +141,13 @@
                             <span id="subtotal">0 so'm</span>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <span>Soliq (12%):</span>
-                            <span id="tax">0 so'm</span>
+                            <span>Ofitsiant (10%):</span>
+                            <span id="commission">0 so'm</span>
                         </div>
                         <div class="d-flex justify-content-between">
                             <span>Chegirma:</span>
-                            <input type="number" class="form-control form-control-sm d-inline" style="width: 100px;" 
-                                   name="discount_amount" id="discount" value="0" min="0" onchange="calculateTotal()">
+                            <input type="number" class="form-control form-control-sm d-inline" style="width: 100px;"
+                                name="discount_amount" id="discount" value="0" min="0" onchange="calculateTotal()">
                         </div>
                         <hr>
                         <div class="d-flex justify-content-between fw-bold">
@@ -159,8 +159,8 @@
                     <!-- Notes -->
                     <div class="mb-3">
                         <label for="notes" class="form-label">Izoh</label>
-                        <textarea class="form-control" id="notes" name="notes" rows="2" 
-                                  placeholder="Maxsus talablar..."></textarea>
+                        <textarea class="form-control" id="notes" name="notes" rows="2"
+                            placeholder="Maxsus talablar..."></textarea>
                     </div>
 
                     <div class="d-grid gap-2">
@@ -196,8 +196,8 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Maxsus ko'rsatmalar</label>
-                    <textarea class="form-control" id="modalInstructions" rows="2" 
-                              placeholder="Masalan: achchiq bo'lmasin, kam tuzli..."></textarea>
+                    <textarea class="form-control" id="modalInstructions" rows="2"
+                        placeholder="Masalan: achchiq bo'lmasin, kam tuzli..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -211,74 +211,78 @@
 
 @section('scripts')
 <script>
-let orderItems = [];
-let currentProduct = null;
+    let orderItems = [];
+    let currentProduct = null;
 
-function addToOrder(productId, productName, productPrice) {
-    currentProduct = {id: productId, name: productName, price: productPrice};
-    document.getElementById('productModalTitle').textContent = productName;
-    document.getElementById('modalQuantity').value = 1;
-    document.getElementById('modalInstructions').value = '';
-    new bootstrap.Modal(document.getElementById('productModal')).show();
-}
-
-function changeQuantity(change) {
-    const quantityInput = document.getElementById('modalQuantity');
-    const newValue = parseInt(quantityInput.value) + change;
-    if (newValue >= 1) {
-        quantityInput.value = newValue;
+    function addToOrder(productId, productName, productPrice) {
+        currentProduct = {
+            id: productId,
+            name: productName,
+            price: productPrice
+        };
+        document.getElementById('productModalTitle').textContent = productName;
+        document.getElementById('modalQuantity').value = 1;
+        document.getElementById('modalInstructions').value = '';
+        new bootstrap.Modal(document.getElementById('productModal')).show();
     }
-}
 
-function confirmAddToOrder() {
-    const quantity = parseInt(document.getElementById('modalQuantity').value);
-    const instructions = document.getElementById('modalInstructions').value;
-    
-    const existingIndex = orderItems.findIndex(item => 
-        item.id === currentProduct.id && item.instructions === instructions
-    );
-    
-    if (existingIndex >= 0) {
-        orderItems[existingIndex].quantity += quantity;
-    } else {
-        orderItems.push({
-            id: currentProduct.id,
-            name: currentProduct.name,
-            price: currentProduct.price,
-            quantity: quantity,
-            instructions: instructions
-        });
+    function changeQuantity(change) {
+        const quantityInput = document.getElementById('modalQuantity');
+        const newValue = parseInt(quantityInput.value) + change;
+        if (newValue >= 1) {
+            quantityInput.value = newValue;
+        }
     }
-    
-    updateOrderDisplay();
-    bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
-}
 
-function removeFromOrder(index) {
-    orderItems.splice(index, 1);
-    updateOrderDisplay();
-}
+    function confirmAddToOrder() {
+        const quantity = parseInt(document.getElementById('modalQuantity').value);
+        const instructions = document.getElementById('modalInstructions').value;
 
-function updateQuantity(index, change) {
-    const newQuantity = orderItems[index].quantity + change;
-    if (newQuantity <= 0) {
-        removeFromOrder(index);
-    } else {
-        orderItems[index].quantity = newQuantity;
+        const existingIndex = orderItems.findIndex(item =>
+            item.id === currentProduct.id && item.instructions === instructions
+        );
+
+        if (existingIndex >= 0) {
+            orderItems[existingIndex].quantity += quantity;
+        } else {
+            orderItems.push({
+                id: currentProduct.id,
+                name: currentProduct.name,
+                price: currentProduct.price,
+                quantity: quantity,
+                instructions: instructions
+            });
+        }
+
+        updateOrderDisplay();
+        bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+    }
+
+    function removeFromOrder(index) {
+        orderItems.splice(index, 1);
         updateOrderDisplay();
     }
-}
 
-function updateOrderDisplay() {
-    const container = document.getElementById('orderItems');
-    
-    if (orderItems.length === 0) {
-        container.innerHTML = '<p class="text-muted text-center">Mahsulot tanlanmagan</p>';
-        document.getElementById('submitBtn').disabled = true;
-    } else {
-        let html = '';
-        orderItems.forEach((item, index) => {
-            html += `
+    function updateQuantity(index, change) {
+        const newQuantity = orderItems[index].quantity + change;
+        if (newQuantity <= 0) {
+            removeFromOrder(index);
+        } else {
+            orderItems[index].quantity = newQuantity;
+            updateOrderDisplay();
+        }
+    }
+
+    function updateOrderDisplay() {
+        const container = document.getElementById('orderItems');
+
+        if (orderItems.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">Mahsulot tanlanmagan</p>';
+            document.getElementById('submitBtn').disabled = true;
+        } else {
+            let html = '';
+            orderItems.forEach((item, index) => {
+                html += `
                 <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
                     <div class="flex-grow-1">
                         <h6 class="mb-0">${item.name}</h6>
@@ -298,57 +302,57 @@ function updateOrderDisplay() {
                 <input type="hidden" name="products[${index}][quantity]" value="${item.quantity}">
                 <input type="hidden" name="products[${index}][instructions]" value="${item.instructions}">
             `;
-        });
-        container.innerHTML = html;
-        document.getElementById('submitBtn').disabled = false;
+            });
+            container.innerHTML = html;
+            document.getElementById('submitBtn').disabled = false;
+        }
+
+        calculateTotal();
     }
-    
-    calculateTotal();
-}
 
-function calculateTotal() {
-    const subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const tax = subtotal * 0.12;
-    const discount = parseFloat(document.getElementById('discount').value) || 0;
-    const total = subtotal + tax - discount;
-    
-    document.getElementById('subtotal').textContent = subtotal.toLocaleString() + ' so\'m';
-    document.getElementById('tax').textContent = tax.toLocaleString() + ' so\'m';
-    document.getElementById('total').textContent = total.toLocaleString() + ' so\'m';
-}
+    function calculateTotal() {
+        const subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const commission = subtotal * 0.10; // 10% waiter commission
+        const discount = parseFloat(document.getElementById('discount').value) || 0;
+        const total = subtotal + commission - discount;
 
-// Product card hover effects
-document.addEventListener('DOMContentLoaded', function() {
-    const productCards = document.querySelectorAll('.product-card');
-    productCards.forEach(card => {
-        card.style.cursor = 'pointer';
-        card.style.transition = 'transform 0.2s';
-        
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-2px)';
-            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0)';
-            this.style.boxShadow = '';
+        document.getElementById('subtotal').textContent = subtotal.toLocaleString() + ' so\'m';
+        document.getElementById('commission').textContent = commission.toLocaleString() + ' so\'m';
+        document.getElementById('total').textContent = total.toLocaleString() + ' so\'m';
+    }
+
+    // Product card hover effects
+    document.addEventListener('DOMContentLoaded', function() {
+        const productCards = document.querySelectorAll('.product-card');
+        productCards.forEach(card => {
+            card.style.cursor = 'pointer';
+            card.style.transition = 'transform 0.2s';
+
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+            });
+
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '';
+            });
         });
     });
-});
 </script>
 
 <style>
-.product-card {
-    transition: transform 0.2s, box-shadow 0.2s;
-}
+    .product-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
 
-.product-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
+    .product-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
 
-.sticky-top {
-    top: 20px;
-}
+    .sticky-top {
+        top: 20px;
+    }
 </style>
 @endsection

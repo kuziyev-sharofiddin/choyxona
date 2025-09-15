@@ -127,11 +127,11 @@
                 <p class="text-center small text-muted">Rahmat!</p>
                 
                 <div class="d-grid gap-2 mt-3">
-                    <button onclick="window.print()" class="btn btn-success">
-                        <i class="fas fa-print"></i> Chekni Chop Etish
-                    </button><li><a class="dropdown-item" href="{{ route('reservations.receipt', $payment->reservation) }}" target="_blank">
+                    <button class="btn btn-success">
+                        <a class="dropdown-item" href="{{ route('reservations.receipt', $payment->reservation) }}" target="_blank">
     <i class="fas fa-receipt me-2"></i>Chekni Chop Etish
-</a></li>
+</a>
+                    </button>
                     @if($payment->status === 'pending')
                     <form action="{{ route('payments.process', $payment) }}" method="POST">
                         @csrf

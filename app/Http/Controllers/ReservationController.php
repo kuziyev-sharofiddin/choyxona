@@ -243,10 +243,10 @@ class ReservationController extends Controller
         }
 
         if ($request->date) {
-            $query->whereDate('start_time', $request->date);
+            $query->whereDate('reservation_date', $request->date);
         }
 
-        $reservations = $query->orderBy('start_time', 'desc')->get();
+        $reservations = $query->orderBy('reservation_date', 'desc')->get();
 
         // Create Excel file
         $filename = 'rezervatsiyalar_' . date('Y-m-d_H-i-s') . '.csv';
