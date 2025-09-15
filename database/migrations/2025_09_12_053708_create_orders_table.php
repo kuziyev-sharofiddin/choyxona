@@ -13,10 +13,15 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
+            $table->string('order_type')->default('dine_in')->after('order_number'); // dine_in, takeaway, delivery
             $table->string('order_number')->unique();
             $table->foreignId('reservation_id')
-              ->constrained('reservations');
+              ->constrained('reservations')->nullable();
             $table->foreignId('customer_id')->constrained();
+            $table->string('customer_phone')->nullable();
+            $table->string('customer_name')->nullable();
+            $table->text('delivery_address')->nullable();
+            $table->decimal('delivery_fee', 8, 2)->default(0);
             $table->foreignId('waiter_id')->constrained('users');
             $table->decimal('subtotal', 12, 2);
             $table->decimal('tax_amount', 10, 2)->default(0);

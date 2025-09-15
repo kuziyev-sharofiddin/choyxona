@@ -14,6 +14,10 @@ class Order extends Model
         'reservation_id',
         'customer_id',
         'waiter_id',
+        'customer_phone',
+        'customer_name',
+        'delivery_address',
+        'delivery_fee',
         'subtotal',
         'tax_amount',
         'waiter_commission',
@@ -73,8 +77,23 @@ class Order extends Model
         // Use config for commission rate
         $commissionRate = config('choyxona.waiter_commission_rate', 0.10);
         $this->waiter_commission = $this->subtotal * $commissionRate;
+        $additionalFee = $this->order_type === 'delivery' ? $this->delivery_fee : 0;
 
-        $this->total_amount = $this->subtotal + $this->waiter_commission - $this->discount_amount;
+        $this->total_amount = $this->subtotal + $additionalFee + $this->waiter_commission - $this->discount_amount;
         $this->save();
+    }
+    public function needsReservation()
+    {
+        return $this->order_type === 'dine_in';
+    }
+    public function getOrderTypeDisplayAttribute()
+    {
+        $types = [
+            'dine_in' => 'Ichkarida ovqatlanish',
+            'takeaway' => 'Olib ketish',
+            'delivery' => 'Yetkazib berish'
+        ];
+        
+        return $types[$this->order_type] ?? $this->order_type;
     }
 }
