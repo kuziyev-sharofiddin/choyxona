@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->string('order_type')->default('dine_in')->after('order_number'); // dine_in, takeaway, delivery
+            $table->string('order_type')->default('dine_in'); // dine_in, takeaway, delivery
             $table->string('order_number')->unique();
             $table->foreignId('reservation_id')
               ->constrained('reservations')->nullable();

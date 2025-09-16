@@ -15,7 +15,7 @@
                 <a href="{{ route('orders.kitchen') }}" class="btn btn-warning me-2">
                     <i class="fas fa-fire"></i> Oshxona Dashboard
                 </a>
-                <a href="{{ route('orders.create') }}" class="btn btn-primary">
+                <a href="{{ route('create_order_by_type') }}" class="btn btn-primary">
                     <i class="fas fa-plus"></i> Yangi Buyurtma
                 </a>
             </div>
@@ -95,7 +95,7 @@
                             <br><small class="text-muted">{{ $order->order_time->format('d.m.Y H:i') }}</small>
                         </td>
                         <td>
-                            <strong>{{ $order->reservation->room->name_uz }}</strong>
+                            <strong>{{ $order->reservation->room->name_uz ?? "Ma'lumot yo'q" }}</strong>
                             <br><small>{{ $order->customer->name }}</small>
                             <br><small class="text-muted">{{ $order->customer->phone }}</small>
                         </td>

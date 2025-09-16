@@ -19,6 +19,7 @@ class Order extends Model
         'delivery_address',
         'delivery_fee',
         'subtotal',
+        'order_type',
         'tax_amount',
         'waiter_commission',
         'discount_amount',
@@ -76,7 +77,8 @@ class Order extends Model
 
         // Use config for commission rate
         $commissionRate = config('choyxona.waiter_commission_rate', 0.10);
-        $this->waiter_commission = $this->subtotal * $commissionRate;
+        
+        $this->waiter_commission = $this->order_type === 'dine_in' ? $this->subtotal * $commissionRate : 0;
         $additionalFee = $this->order_type === 'delivery' ? $this->delivery_fee : 0;
 
         $this->total_amount = $this->subtotal + $additionalFee + $this->waiter_commission - $this->discount_amount;

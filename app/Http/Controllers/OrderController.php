@@ -31,78 +31,41 @@ class OrderController extends Controller
     public function create(Request $request)
     {
         $reservation = null;
-        $orderType = $request->get('order_type', 'dine_in');
-        
-        // Only get reservation for dine-in orders
-        if ($orderType === 'dine_in' && $request->reservation_id) {
+        if ($request->reservation_id) {
             $reservation = Reservation::with(['room', 'customer'])->find($request->reservation_id);
         }
 
         $categories = Category::where('is_active', true)
-                            ->with(['products' => function($q) {
-                                $q->where('is_available', true);
-                            }])
-                            ->orderBy('sort_order')
-                            ->get();
+            ->with(['products' => function ($q) {
+                $q->where('is_available', true);
+            }])
+            ->orderBy('sort_order')
+            ->get();
 
         $popularProducts = Product::where('is_popular', true)
-                                 ->where('is_available', true)
-                                 ->get();
+            ->where('is_available', true)
+            ->get();
 
-        return view('orders.create', compact('reservation', 'categories', 'popularProducts', 'orderType'));
+        return view('orders.create', compact('reservation', 'categories', 'popularProducts'));
     }
+
 
     public function store(Request $request)
     {
-        $rules = [
-            'order_type' => 'required|in:dine_in,takeaway,delivery',
+        $request->validate([
+            'reservation_id' => 'required|exists:reservations,id',
             'products' => 'required|array',
             'products.*.id' => 'required|exists:products,id',
             'products.*.quantity' => 'required|integer|min:1',
-        ];
+        ]);
 
-        // Add conditional validation based on order type
-        if ($request->order_type === 'dine_in') {
-            $rules['reservation_id'] = 'required|exists:reservations,id';
-        } else {
-            $rules['customer_name'] = 'required|string|max:255';
-            $rules['customer_phone'] = 'required|string|max:20';
-            
-            if ($request->order_type === 'delivery') {
-                $rules['delivery_address'] = 'required|string';
-                $rules['delivery_fee'] = 'required|numeric|min:0';
-            }
-        }
-
-        $request->validate($rules);
-
-        // Handle customer for takeaway/delivery orders
-        if (in_array($request->order_type, ['takeaway', 'delivery'])) {
-            $customer = Customer::firstOrCreate(
-                ['phone' => $request->customer_phone],
-                [
-                    'name' => $request->customer_name,
-                    'email' => $request->customer_email
-                ]
-            );
-            $customerId = $customer->id;
-        } else {
-            $reservation = Reservation::find($request->reservation_id);
-            $customerId = $reservation->customer_id;
-        }
+        $reservation = Reservation::find($request->reservation_id);
 
         $order = Order::create([
-            'order_type' => $request->order_type,
-            'reservation_id' => $request->order_type === 'dine_in' ? $request->reservation_id : null,
-            'customer_id' => $customerId,
-            'customer_name' => $request->customer_name,
-            'customer_phone' => $request->customer_phone,
-            'delivery_address' => $request->delivery_address,
-            'delivery_fee' => $request->delivery_fee ?? 0,
+            'reservation_id' => $reservation->id,
+            'customer_id' => $reservation->customer_id,
             'waiter_id' => auth()->id(),
             'subtotal' => 0,
-            'tax_amount' => 0, // Set to 0
-            'waiter_commission' => 0, // Will be calculated
             'total_amount' => 0,
             'discount_amount' => $request->discount_amount ?? 0,
             'notes' => $request->notes,
@@ -127,7 +90,7 @@ class OrderController extends Controller
         $order->calculateTotal();
 
         return redirect()->route('orders.show', $order)
-                        ->with('success', 'Buyurtma muvaffaqiyatli yaratildi!');
+            ->with('success', 'Buyurtma muvaffaqiyatli yaratildi!');
     }
 
     public function show(Order $order)

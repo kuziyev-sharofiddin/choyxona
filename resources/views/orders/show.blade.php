@@ -35,7 +35,7 @@
                             </tr>
                             <tr>
                                 <th>Xona:</th>
-                                <td>{{ $order->reservation->room->name_uz }}</td>
+                                <td>{{ $order->reservation->room->name_uz  ?? "Ma'lumot yo'q"  }}</td>
                             </tr>
                             <tr>
                                 <th>Ofitsiant:</th>
@@ -138,10 +138,17 @@
                         <td>Mahsulotlar:</td>
                         <td class="text-end">{{ number_format($order->subtotal) }} so'm</td>
                     </tr>
+                    @if($order->order_type === 'takeaway')
                     <tr>
                         <td>Ofitsiant komissiyasi (10%):</td>
                         <td class="text-end">{{ number_format($order->waiter_commission ?? $order->subtotal * 0.10) }} so'm</td>
                     </tr>
+                    @elseif ($order->order_type === 'delivery')
+                    <tr>
+                        <td>Yetkazib berish xizmati:</td>
+                        <td class="text-end">{{ number_format($order->delivery_fee) }} so'm</td>
+                    </tr>
+                    @endif
                     @if($order->discount_amount > 0)
                     <tr>
                         <td>Chegirma:</td>
@@ -163,7 +170,6 @@
             <div class="card-body">
                 <p><strong>Mahsulotlar soni:</strong> {{ $order->items->count() }}</p>
                 <p><strong>Jami miqdor:</strong> {{ $order->items->sum('quantity') }} dona</p>
-                <p><strong>O'rtacha narx:</strong> {{ number_format($order->total_amount / $order->items->sum('quantity')) }} so'm</p>
 
                 @php
                 $totalPrepTime = $order->items->sum(function($item) {

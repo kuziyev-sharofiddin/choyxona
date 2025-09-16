@@ -5,6 +5,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\OrderByTypeController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
@@ -52,6 +53,8 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('orders', OrderController::class);
     Route::get('kitchen', [OrderController::class, 'kitchen'])->name('orders.kitchen');
     Route::post('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
+    Route::get('create-by-type', [OrderByTypeController::class, 'createByType'])->name('create_order_by_type');
+    Route::post('store-by-type', [OrderByTypeController::class, 'storeByType'])->name('store_order_by_type');
     
     // Products
     Route::resource('products', ProductController::class);

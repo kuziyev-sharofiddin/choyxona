@@ -97,7 +97,7 @@
                         </a>
                     </div>
                     <div class="col-md-3 mb-2">
-                        <a href="{{ route('orders.create') }}" class="btn btn-success w-100">
+                        <a href="{{ route('create_order_by_type') }}" class="btn btn-success w-100">
                             <i class="fas fa-utensils"></i> Yangi Buyurtma
                         </a>
                     </div>
