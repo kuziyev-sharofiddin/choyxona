@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->string('payment_number')->unique();
-            $table->foreignId('reservation_id')
+            $table->foreignId('order_id')->nullable()->constrained('orders');
+            $table->foreignId('reservation_id')->nullable()
             ->constrained('reservations');
             $table->decimal('amount', 12, 2);
             $table->string('payment_method'); // cash, card, transfer

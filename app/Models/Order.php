@@ -77,7 +77,7 @@ class Order extends Model
 
         // Use config for commission rate
         $commissionRate = config('choyxona.waiter_commission_rate', 0.10);
-        
+
         $this->waiter_commission = $this->order_type === 'dine_in' ? $this->subtotal * $commissionRate : 0;
         $additionalFee = $this->order_type === 'delivery' ? $this->delivery_fee : 0;
 
@@ -95,7 +95,26 @@ class Order extends Model
             'takeaway' => 'Olib ketish',
             'delivery' => 'Yetkazib berish'
         ];
-        
+
         return $types[$this->order_type] ?? $this->order_type;
+    }
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function getTotalPaid()
+    {
+        return $this->payments()->where('status', 'completed')->sum('amount');
+    }
+
+    public function getRemainingAmount()
+    {
+        return $this->total_amount - $this->getTotalPaid();
+    }
+
+    public function isFullyPaid()
+    {
+        return $this->getRemainingAmount() <= 0;
     }
 }

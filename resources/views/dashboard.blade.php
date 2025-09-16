@@ -91,24 +91,14 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-3 mb-2">
+                    <div class="col-md-6 mb-2">
                         <a href="{{ route('reservations.create') }}" class="btn btn-primary w-100">
                             <i class="fas fa-plus"></i> Yangi Rezervatsiya
                         </a>
                     </div>
-                    <div class="col-md-3 mb-2">
+                    <div class="col-md-6 mb-2">
                         <a href="{{ route('create_order_by_type') }}" class="btn btn-success w-100">
                             <i class="fas fa-utensils"></i> Yangi Buyurtma
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="{{ route('orders.kitchen') }}" class="btn btn-warning w-100">
-                            <i class="fas fa-fire"></i> Oshxona Dashboard
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="{{ route('customers.create') }}" class="btn btn-info w-100">
-                            <i class="fas fa-user-plus"></i> Yangi Mijoz
                         </a>
                     </div>
                 </div>

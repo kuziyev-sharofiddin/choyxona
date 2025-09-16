@@ -174,9 +174,9 @@
                     <a class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}" href="{{ route('orders.index') }}">
                         <i class="fas fa-utensils me-2"></i> Buyurtmalar
                     </a>
-                    <a class="nav-link {{ request()->routeIs('orders.kitchen') ? 'active' : '' }}" href="{{ route('orders.kitchen') }}">
+                    <!-- <a class="nav-link {{ request()->routeIs('orders.kitchen') ? 'active' : '' }}" href="{{ route('orders.kitchen') }}">
                         <i class="fas fa-fire me-2"></i> Oshxona
-                    </a>
+                    </a> -->
                     <a class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}" href="{{ route('products.index') }}">
                         <i class="fas fa-box me-2"></i> Mahsulotlar
                     </a>
