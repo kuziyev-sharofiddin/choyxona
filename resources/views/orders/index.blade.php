@@ -102,8 +102,10 @@
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 @if($order->status !== 'completed')
-                                <button class="btn btn-outline-primary" onclick="updateStatus('{{ $order->id }}')">
+                                <button class="btn btn-outline-primary">
+                                <a href="{{ route('orders.show', $order) }}">
                                     <i class="fas fa-edit"></i>
+                                </a>
                                 </button>
                                 @endif
                             </div>
