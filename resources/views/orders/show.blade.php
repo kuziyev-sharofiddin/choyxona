@@ -54,13 +54,7 @@
                                 <td>
                                     @if($order->status === 'pending')
                                     <span class="badge bg-warning">Kutilmoqda</span>
-                                    @elseif($order->status === 'preparing')
-                                    <span class="badge bg-info">Tayyorlanmoqda</span>
-                                    @elseif($order->status === 'ready')
-                                    <span class="badge bg-success">Tayyor</span>
-                                    @elseif($order->status === 'served')
-                                    <span class="badge bg-primary">Berildi</span>
-                                    @else
+                                    @elseif($order->status === 'completed')
                                     <span class="badge bg-secondary">Tugallangan</span>
                                     @endif
                                 </td>
@@ -113,8 +107,8 @@
                                 <td>{{ number_format($item->unit_price) }} so'm</td>
                                 <td><strong>{{ number_format($item->total_price) }} so'm</strong></td>
                                 <td>
-                                    <span class="badge bg-{{ $item->status === 'ready' ? 'success' : 'warning' }}">
-                                        {{ $item->status === 'ready' ? 'Tayyor' : 'Tayyorlanmoqda' }}
+                                    <span class="badge bg-{{ $item->status === 'pending' ? 'warning' : 'secondary' }}">
+                                        {{ $item->status === 'pending' ? 'Kutilmoqda' : 'Tugatilgan' }}
                                     </span>
                                 </td>
                             </tr>
@@ -183,30 +177,34 @@
 </div>
 
 <!-- Status Update Modal -->
-<div class="modal fade" id="statusModal" tabindex="-1">
+<div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Buyurtma Holatini O'zgartirish</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="statusModalLabel">Buyurtma Holatini O'zgartirish</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="statusForm">
+                    @csrf
                     <div class="mb-3">
-                        <label class="form-label">Yangi Holat</label>
-                        <select class="form-control" id="newStatus" required>
+                        <label for="newStatus" class="form-label">Yangi Holat</label>
+                        <select class="form-select" id="newStatus" required>
+                            <option value="">Holatni tanlang...</option>
                             <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Kutilmoqda</option>
-                            <option value="preparing" {{ $order->status === 'preparing' ? 'selected' : '' }}>Tayyorlanmoqda</option>
-                            <option value="ready" {{ $order->status === 'ready' ? 'selected' : '' }}>Tayyor</option>
-                            <option value="served" {{ $order->status === 'served' ? 'selected' : '' }}>Berildi</option>
                             <option value="completed" {{ $order->status === 'completed' ? 'selected' : '' }}>Tugallandi</option>
                         </select>
+                    </div>
+                    <div id="loading" class="text-center" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Yuklanmoqda...</span>
+                        </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
-                <button type="button" class="btn btn-primary" onclick="saveStatus()">Saqlash</button>
+                <button type="button" class="btn btn-primary" onclick="saveStatus()" id="saveBtn">Saqlash</button>
             </div>
         </div>
     </div>
@@ -216,32 +214,102 @@
 @section('scripts')
 <script>
     function updateOrderStatus() {
-        new bootstrap.Modal(document.getElementById('statusModal')).show();
+        // Modal ko'rsatish
+        const statusModal = new bootstrap.Modal(document.getElementById('statusModal'));
+        statusModal.show();
     }
 
     function saveStatus() {
-        const status = document.getElementById('newStatus').value;
-
-        fetch(`/orders/{{ $order->id }}/status`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    status: status
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Xatolik yuz berdi');
-            });
+    const status = document.getElementById('newStatus').value;
+    const saveBtn = document.getElementById('saveBtn');
+    const loading = document.getElementById('loading');
+    
+    // Debug: consolega log yozish
+    console.log('Selected status:', status);
+    console.log('Order ID:', {{ $order->id }});
+    console.log('CSRF Token:', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+    
+    // Validatsiya
+    if (!status) {
+        alert('Iltimos, yangi holatni tanlang!');
+        return;
     }
+    
+    // Loading ko'rsatish
+    saveBtn.disabled = true;
+    if (loading) loading.style.display = 'block';
+    
+    const url = `/orders/{{ $order->id }}/status`;
+    console.log('Request URL:', url);
+    
+    const requestData = {
+        status: status
+    };
+    console.log('Request data:', requestData);
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
+        // Response text-ini olish (debug uchun)
+        return response.text().then(text => {
+            console.log('Raw response:', text);
+            
+            try {
+                const data = JSON.parse(text);
+                return { data, status: response.status, ok: response.ok };
+            } catch (e) {
+                console.error('JSON parse error:', e);
+                throw new Error('Server JSON emas, HTML qaytardi: ' + text.substring(0, 200));
+            }
+        });
+    })
+    .then(({ data, status, ok }) => {
+        console.log('Parsed response data:', data);
+        
+        if (!ok) {
+            throw new Error(`HTTP error! status: ${status}`);
+        }
+        
+        if (data.success) {
+            alert('Holat muvaffaqiyatli o\'zgartirildi!');
+            
+            // Modal yopish
+            const modal = bootstrap.Modal.getInstance(document.getElementById('statusModal'));
+            if (modal) modal.hide();
+            
+            // Sahifani yangilash
+            setTimeout(() => {
+                location.reload();
+            }, 500);
+        } else {
+            throw new Error(data.message || 'Noma\'lum xatolik');
+        }
+    })
+    .catch(error => {
+        console.error('Full error:', error);
+        alert('Xatolik yuz berdi: ' + error.message);
+    })
+    .finally(() => {
+        // Loading yashirish
+        saveBtn.disabled = false;
+        if (loading) loading.style.display = 'none';
+    });
+}
+    
+    // Enter tugmasini bosish orqali saqlash
+    document.getElementById('statusForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveStatus();
+    });
 </script>
 @endsection

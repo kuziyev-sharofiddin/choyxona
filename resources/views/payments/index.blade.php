@@ -90,15 +90,19 @@
                             <strong>{{ $payment->payment_number }}</strong>
                         </td>
                         <td>
-                            <strong>{{ $payment->reservation->customer->name }}</strong>
-                            <br><small class="text-muted">{{ $payment->reservation->customer->phone }}</small>
+                            <strong>{{ $payment->reservation->customer->name ?? $payment->order->customer->name }}</strong>
+                            <br><small class="text-muted">{{ $payment->reservation->customer->phone ?? $payment->order->customer->phone }}</small>
                         </td>
+                        @if ($payment->reservation)
                         <td>
                             <a href="{{ route('reservations.show', $payment->reservation) }}">
                                 {{ $payment->reservation->reservation_number }}
                             </a>
                             <br><small class="text-muted">{{ $payment->reservation->room->name_uz }}</small>
                         </td>
+                        @else
+                        <td>Ma'lumot yo'q</td>
+                        @endif
                         <td>
                             <strong class="text-success">{{ number_format($payment->amount) }} so'm</strong>
                         </td>
@@ -117,7 +121,7 @@
                         </td>
                         <td>
                             @if($payment->status === 'completed')
-                                <span class="badge bg-success">Tugallangan</span>
+                                <span class="badge bg-secondary">Tugallangan</span>
                             @elseif($payment->status === 'pending')
                                 <span class="badge bg-warning">Kutilmoqda</span>
                             @else

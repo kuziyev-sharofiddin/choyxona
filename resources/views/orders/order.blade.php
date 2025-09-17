@@ -306,58 +306,70 @@ let currentProduct = null;
 const reservationsData = @json($reservations ?? []);
 
 // Order type change handler
+// Order type change handler - tuzatilgan versiya
 document.querySelectorAll('input[name="order_type"]').forEach(radio => {
     radio.addEventListener('change', function() {
         const orderType = this.value;
-        console.log('Order type changed to:', orderType); // Debug log
+        console.log('Order type changed to:', orderType);
         
-        // Show/hide relevant sections
+        // Elements
         const customerInfo = document.getElementById('customerInfo');
         const deliveryInfo = document.getElementById('deliveryInfo');
         const deliveryFeeRow = document.getElementById('deliveryFeeRow');
         const reservationSelection = document.getElementById('reservationSelection');
         const selectedReservationInfo = document.getElementById('selectedReservationInfo');
         
-        // Reset required attributes
+        // Form elements
         const customerName = document.getElementById('customer_name');
         const customerPhone = document.getElementById('customer_phone');
         const deliveryAddress = document.getElementById('delivery_address');
         
+        // Reset delivery fee input
+        document.getElementById('delivery_fee').value = '10000';
+        
         if (orderType === 'dine_in') {
+            // Dine-in: faqat rezervatsiya kerak
             customerInfo.style.display = 'none';
             deliveryInfo.style.display = 'none';
             deliveryFeeRow.style.display = 'none';
             reservationSelection.style.display = 'block';
             
-            // Remove required attributes for customer info
+            // Remove required attributes
             customerName.removeAttribute('required');
             customerPhone.removeAttribute('required');
             deliveryAddress.removeAttribute('required');
             
-            // Set current reservation if selected
             const currentReservation = document.getElementById('reservation_select').value;
             document.getElementById('selected_reservation_id').value = currentReservation;
-        } else {
+            
+        } else if (orderType === 'takeaway') {
+            // Takeaway: mijoz ma'lumotlari kerak, delivery fee yo'q
             customerInfo.style.display = 'block';
+            deliveryInfo.style.display = 'none';
+            deliveryFeeRow.style.display = 'none'; // Takeaway uchun delivery fee qatori yashirin
             reservationSelection.style.display = 'none';
             selectedReservationInfo.style.display = 'none';
             
-            // Add required attributes for customer info
+            // Customer info required
             customerName.setAttribute('required', 'required');
             customerPhone.setAttribute('required', 'required');
+            deliveryAddress.removeAttribute('required');
             
-            if (orderType === 'delivery') {
-                deliveryInfo.style.display = 'block';
-                deliveryFeeRow.style.display = 'flex';
-                deliveryAddress.setAttribute('required', 'required');
-            } else {
-                deliveryInfo.style.display = 'none';
-                deliveryFeeRow.style.display = 'none';
-                deliveryAddress.removeAttribute('required');
-            }
+        } else if (orderType === 'delivery') {
+            // Delivery: mijoz ma'lumotlari va manzil kerak, delivery fee ko'rinadi
+            customerInfo.style.display = 'block';
+            deliveryInfo.style.display = 'block';
+            deliveryFeeRow.style.display = 'flex'; // Delivery uchun delivery fee qatori ko'rinadi
+            reservationSelection.style.display = 'none';
+            selectedReservationInfo.style.display = 'none';
+            
+            // All customer info required
+            customerName.setAttribute('required', 'required');
+            customerPhone.setAttribute('required', 'required');
+            deliveryAddress.setAttribute('required', 'required');
         }
         
-        // Update total calculation when order type changes
+        // Update total calculation
         calculateTotal();
     });
 });
@@ -497,22 +509,33 @@ function calculateTotal() {
     const orderTypeRadio = document.querySelector('input[name="order_type"]:checked');
     const orderType = orderTypeRadio ? orderTypeRadio.value : 'dine_in';
     
-    // Commission only for dine-in orders (10%), 0% for takeaway/delivery
-    const commission = orderType === 'dine_in' ? subtotal * 0.10 : 0;
+    // Commission calculation
+    let commission = 0;
+    let commissionPercentage = '0%';
     
-    // Add delivery fee if it's a delivery order
+    if (orderType === 'dine_in') {
+        commission = subtotal * 0.10; // 10% for dine-in
+        commissionPercentage = '10%';
+    } else if (orderType === 'takeaway') {
+        commission = 0; // 0% waiter commission for takeaway
+        commissionPercentage = '0%';
+    } else if (orderType === 'delivery') {
+        commission = 0; // 0% commission for delivery
+        commissionPercentage = '0%';
+    }
+    
+    // Delivery fee calculation
     let deliveryFee = 0;
     if (orderType === 'delivery') {
         deliveryFee = parseFloat(document.getElementById('delivery_fee').value) || 0;
         document.getElementById('deliveryFeeDisplay').textContent = deliveryFee.toLocaleString() + ' so\'m';
     }
     
+    // Calculate total
     const total = subtotal + commission + deliveryFee - discount;
     
-    // Update commission label based on order type
-    const commissionPercentage = orderType === 'dine_in' ? '10%' : '0%';
+    // Update display
     document.getElementById('commissionLabel').textContent = `Ofitsiant (${commissionPercentage}):`;
-    
     document.getElementById('subtotal').textContent = subtotal.toLocaleString() + ' so\'m';
     document.getElementById('commission').textContent = commission.toLocaleString() + ' so\'m';
     document.getElementById('total').textContent = total.toLocaleString() + ' so\'m';

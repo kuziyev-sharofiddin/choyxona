@@ -211,9 +211,6 @@
                             <span class="badge bg-{{ $order->status === 'completed' ? 'success' : ($order->status === 'preparing' ? 'warning' : 'info') }}">
                                 @switch($order->status)
                                     @case('pending') Kutilmoqda @break
-                                    @case('preparing') Tayyorlanmoqda @break
-                                    @case('ready') Tayyor @break
-                                    @case('served') Xizmat qilindi @break
                                     @default Tugallangan
                                 @endswitch
                             </span>

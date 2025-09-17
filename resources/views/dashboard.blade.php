@@ -207,13 +207,7 @@
                                 <td>
                                     @if($order->status == 'pending')
                                         <span class="badge bg-warning">Kutilmoqda</span>
-                                    @elseif($order->status == 'preparing')
-                                        <span class="badge bg-info">Tayyorlanmoqda</span>
-                                    @elseif($order->status == 'ready')
-                                        <span class="badge bg-success">Tayyor</span>
-                                    @elseif($order->status == 'served')
-                                        <span class="badge bg-primary">Berildi</span>
-                                    @else
+                                    @elseif($order->status == 'completed')
                                         <span class="badge bg-secondary">Tugallangan</span>
                                     @endif
                                 </td>

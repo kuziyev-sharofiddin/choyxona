@@ -52,9 +52,10 @@ Route::middleware(['auth'])->group(function () {
     // Orders
     Route::resource('orders', OrderController::class);
     Route::get('kitchen', [OrderController::class, 'kitchen'])->name('orders.kitchen');
-    Route::post('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
+    Route::post('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
     Route::get('create-by-type', [OrderByTypeController::class, 'createByType'])->name('create_order_by_type');
     Route::post('store-by-type', [OrderByTypeController::class, 'storeByType'])->name('store_order_by_type');
+    Route::get('orders/returned/list', [OrderController::class, 'returnedItems'])->name('orders.returned');
     
     // Products
     Route::resource('products', ProductController::class);

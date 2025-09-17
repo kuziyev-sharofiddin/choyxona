@@ -12,9 +12,9 @@
                 <p class="text-muted">Jami: {{ $orders->total() }} ta buyurtma</p>
             </div>
             <div>
-                <a href="{{ route('orders.kitchen') }}" class="btn btn-warning me-2">
+                <!-- <a href="{{ route('orders.kitchen') }}" class="btn btn-warning me-2">
                     <i class="fas fa-fire"></i> Oshxona Dashboard
-                </a>
+                </a> -->
                 <a href="{{ route('create_order_by_type') }}" class="btn btn-primary">
                     <i class="fas fa-plus"></i> Yangi Buyurtma
                 </a>
@@ -30,30 +30,6 @@
             <div class="card-body text-center">
                 <h6>Kutilayotgan</h6>
                 <h4>{{ $orders->where('status', 'pending')->count() }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card text-white bg-info">
-            <div class="card-body text-center">
-                <h6>Tayyorlanayotgan</h6>
-                <h4>{{ $orders->where('status', 'preparing')->count() }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card text-white bg-success">
-            <div class="card-body text-center">
-                <h6>Tayyor</h6>
-                <h4>{{ $orders->where('status', 'ready')->count() }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card text-white bg-primary">
-            <div class="card-body text-center">
-                <h6>Berilgan</h6>
-                <h4>{{ $orders->where('status', 'served')->count() }}</h4>
             </div>
         </div>
     </div>
@@ -116,13 +92,7 @@
                         <td>
                             @if($order->status === 'pending')
                                 <span class="badge bg-warning">Kutilmoqda</span>
-                            @elseif($order->status === 'preparing')
-                                <span class="badge bg-info">Tayyorlanmoqda</span>
-                            @elseif($order->status === 'ready')
-                                <span class="badge bg-success">Tayyor</span>
-                            @elseif($order->status === 'served')
-                                <span class="badge bg-primary">Berilgan</span>
-                            @else
+                            @elseif($order->status === 'completed')
                                 <span class="badge bg-secondary">Tugallangan</span>
                             @endif
                         </td>
@@ -171,9 +141,6 @@
                         <label class="form-label">Yangi Holat</label>
                         <select class="form-control" id="newStatus" required>
                             <option value="pending">Kutilmoqda</option>
-                            <option value="preparing">Tayyorlanmoqda</option>
-                            <option value="ready">Tayyor</option>
-                            <option value="served">Berilgan</option>
                             <option value="completed">Tugallangan</option>
                         </select>
                     </div>

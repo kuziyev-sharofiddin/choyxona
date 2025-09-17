@@ -10,8 +10,13 @@ class OrderItem extends Model
     use HasFactory;
 
     protected $fillable = [
-        'order_id', 'product_id', 'quantity', 'unit_price', 
-        'total_price', 'special_instructions', 'status'
+        'order_id',
+        'product_id',
+        'quantity',
+        'unit_price',
+        'total_price',
+        'special_instructions',
+        'status'
     ];
 
     protected $casts = [
@@ -27,5 +32,21 @@ class OrderItem extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+    public function isReturned()
+    {
+        return $this->status === 'returned';
+    }
+
+    public function canBeReturned()
+    {
+        return in_array($this->status, ['ready', 'served']) &&
+            $this->order->status !== 'completed';
+    }
+
+    // Scope for returned items
+    public function scopeReturned($query)
+    {
+        return $query->where('status', 'returned');
     }
 }

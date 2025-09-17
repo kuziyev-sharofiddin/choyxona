@@ -44,7 +44,7 @@
                                         <a href="{{ route('orders.show', $payment->order) }}">
                                             {{ $payment->getSourceDescription() }}
                                         </a>
-                                        <br><small class="text-muted">Xona: {{ $payment->order->reservation->room->name_uz }}</small>
+                                        <br><small class="text-muted">Xona mavjud emas</small>
                                     @endif
                                 </td>
                             </tr>
@@ -163,10 +163,13 @@
                 <p><strong>Chek №:</strong> {{ $payment->payment_number }}</p>
                 <p><strong>Sana:</strong> {{ $payment->payment_time->format('d.m.Y H:i') }}</p>
                 <p><strong>Mijoz:</strong> {{ $payment->getCustomer()->name }}</p>
-                @if($payment->order_id)
+                @if (isset($payment->order))
                 <p><strong>Buyurtma:</strong> {{ $payment->order->order_number }}</p>
-                @else
+                @endif
+                @if(isset($payment->reservation_id))
                 <p><strong>Xona:</strong> {{ $payment->reservation->room->name_uz }}</p>
+                @else
+                <p>Xona mavjud emas</p>
                 @endif
                 <hr>
                 

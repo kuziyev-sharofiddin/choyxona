@@ -81,7 +81,6 @@ class OrderByTypeController extends Controller
             $reservation = Reservation::find($request->reservation_id);
             $customerId = $reservation->customer_id;
         }
-        // dd($request->order_type);
 
         $order = Order::create([
             'order_type' => $request->order_type,

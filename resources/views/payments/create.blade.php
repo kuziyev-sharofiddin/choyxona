@@ -120,7 +120,7 @@
                                 <option value="">Buyurtmani tanlang</option>
                                 @foreach(\App\Models\Order::whereIn('status', ['served', 'completed'])->with(['customer', 'reservation.room'])->get() as $ord)
                                 <option value="{{ $ord->id }}" data-amount="{{ $ord->getRemainingAmount() }}">
-                                    {{ $ord->order_number }} - {{ $ord->customer->name }} ({{ $ord->reservation->room->name_uz }}) - 
+                                    {{ $ord->order_number }} - {{ $ord->customer->name }} ({{ $ord->reservation->room->name_uz  ?? "Ma'lumot yo'q" }}) - 
                                     @if($ord->isFullyPaid())
                                         <span class="text-success">To'langan</span>
                                     @else

@@ -76,8 +76,7 @@
                 <div class="text-end">
                     <span class="badge bg-{{ $order->status === 'pending' ? 'warning' : ($order->status === 'preparing' ? 'info' : 'success') }}">
                         @if($order->status === 'pending') Kutilmoqda
-                        @elseif($order->status === 'preparing') Tayyorlanmoqda
-                        @else Tayyor
+                        @else Tugallangan
                         @endif
                     </span>
                     <div class="small text-muted mt-1">
