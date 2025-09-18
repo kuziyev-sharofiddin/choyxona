@@ -205,6 +205,12 @@ class ReservationController extends Controller
     public function complete(Reservation $reservation)
     {
         $reservation->update(['status' => 'completed']);
+        $orders = $reservation->orders;
+        foreach ($orders as $order) {
+            if ($order->status !== 'completed') {
+                $order->update(['status' => 'completed', 'served_time' => now()]);
+            }
+        }
         $reservation->room->update(['status' => 'available']);
 
         return back()->with('success', 'Rezervatsiya tugallandi!');

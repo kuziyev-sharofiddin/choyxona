@@ -90,7 +90,6 @@
                                 <th>Miqdor</th>
                                 <th>Narx</th>
                                 <th>Jami</th>
-                                <th>Holat</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -106,11 +105,6 @@
                                 <td>{{ $item->quantity }} dona</td>
                                 <td>{{ number_format($item->unit_price) }} so'm</td>
                                 <td><strong>{{ number_format($item->total_price) }} so'm</strong></td>
-                                <td>
-                                    <span class="badge bg-{{ $item->status === 'pending' ? 'warning' : 'secondary' }}">
-                                        {{ $item->status === 'pending' ? 'Kutilmoqda' : 'Tugatilgan' }}
-                                    </span>
-                                </td>
                             </tr>
                             @endforeach
                         </tbody>
