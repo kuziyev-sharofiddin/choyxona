@@ -56,6 +56,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('create-by-type', [OrderByTypeController::class, 'createByType'])->name('create_order_by_type');
     Route::post('store-by-type', [OrderByTypeController::class, 'storeByType'])->name('store_order_by_type');
     Route::get('orders/returned/list', [OrderController::class, 'returnedItems'])->name('orders.returned');
+    Route::post('orders/{order}/quick-status', [OrderController::class, 'quickStatusUpdate'])->name('orders.quick-status');
+    Route::post('orders/bulk-status', [OrderController::class, 'bulkStatusUpdate'])->name('orders.bulk-status');
+    Route::get('api/kitchen/orders', [OrderController::class, 'getKitchenOrders'])->name('api.kitchen.orders');
+    Route::get('api/orders/stats', [OrderController::class, 'getOrderStats'])->name('api.orders.stats');
     
     // Products
     Route::resource('products', ProductController::class);

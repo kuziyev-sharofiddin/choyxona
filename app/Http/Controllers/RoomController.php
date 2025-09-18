@@ -54,14 +54,14 @@ class RoomController extends Controller
     public function show(Room $room)
     {
         $room->load(['reservations' => function($q) {
-            $q->with('customer')->orderBy('start_time', 'desc')->limit(10);
+            $q->with('customer')->orderBy('reservation_date', 'desc')->limit(10);
         }]);
         
         $currentReservation = $room->currentReservation;
         $todayReservations = $room->reservations()
-                                 ->whereDate('start_time', today())
+                                 ->whereDate('reservation_date', today())
                                  ->with('customer')
-                                 ->orderBy('start_time')
+                                 ->orderBy('reservation_date')
                                  ->get();
 
         return view('rooms.show', compact('room', 'currentReservation', 'todayReservations'));

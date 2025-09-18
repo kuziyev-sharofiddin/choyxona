@@ -168,7 +168,7 @@
                 </div>
                 
                 @php
-                    $totalHours = $room->reservations()->sum(\DB::raw('TIMESTAMPDIFF(HOUR, start_time, end_time)'));
+                    $totalHours = $room->reservations()->sum(\DB::raw('TIMESTAMPDIFF(HOUR, reservation_date, end_date)'));
                     $occupancyRate = $totalHours > 0 ? min(100, ($totalHours / (30 * 12)) * 100) : 0; // 30 days * 12 hours average
                 @endphp
                 <div class="text-center">
@@ -188,16 +188,7 @@
                     <a href="{{ route('reservations.create', ['room_id' => $room->id]) }}" class="btn btn-success">
                         <i class="fas fa-calendar-plus"></i> Yangi Rezervatsiya
                     </a>
-                    @endif
-                    
-                    <form action="{{ route('rooms.maintenance', $room) }}" method="POST">
-                        @csrf
-                        <button type="submit" class="btn btn-{{ $room->status === 'maintenance' ? 'success' : 'warning' }} w-100">
-                            <i class="fas fa-{{ $room->status === 'maintenance' ? 'play' : 'tools' }}"></i>
-                            {{ $room->status === 'maintenance' ? 'Faollashtirish' : 'Ta\'mirga Jo\'natish' }}
-                        </button>
-                    </form>
-                    
+                    @endif             
                     <a href="{{ route('rooms.edit', $room) }}" class="btn btn-primary">
                         <i class="fas fa-edit"></i> Tahrirlash
                     </a>

@@ -208,9 +208,6 @@
                     <!-- <a class="nav-link {{ request()->routeIs('orders.kitchen') ? 'active' : '' }}" href="{{ route('orders.kitchen') }}">
                         <i class="fas fa-fire me-2"></i> Oshxona
                     </a> -->
-                    <a class="nav-link {{ request()->routeIs('orders.returned') ? 'active' : '' }}" href="{{ route('orders.returned') }}">
-                        <i class="fas fa-undo"></i> Qaytarilgan Mahsulotlar
-                    </a>
                     <a class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}" href="{{ route('products.index') }}">
                         <i class="fas fa-box me-2"></i> Mahsulotlar
                     </a>

@@ -79,7 +79,7 @@
                         <td>
                             {{ $order->order_time->format('H:i') }}
                             @if($order->served_time)
-                                <br><small class="text-success">Berildi: {{ $order->served_time->format('H:i') }}</small>
+                            <br><small class="text-success">Berildi: {{ $order->served_time->format('H:i') }}</small>
                             @endif
                         </td>
                         <td>
@@ -91,21 +91,29 @@
                         </td>
                         <td>
                             @if($order->status === 'pending')
-                                <span class="badge bg-warning">Kutilmoqda</span>
+                            <span class="badge bg-warning">Kutilmoqda</span>
                             @elseif($order->status === 'completed')
-                                <span class="badge bg-secondary">Tugallangan</span>
+                            <span class="badge bg-secondary">Tugallangan</span>
                             @endif
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <a href="{{ route('orders.show', $order) }}" class="btn btn-outline-info">
+                                <a href="{{ route('orders.show', $order) }}" class="btn btn-outline-info" title="Ko'rish">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                @if($order->status !== 'completed')
-                                <button class="btn btn-outline-primary">
-                                <a href="{{ route('orders.show', $order) }}">
+                                @if(in_array($order->status, ['pending']))
+                                <a href="{{ route('orders.edit', $order) }}" class="btn btn-outline-primary" title="To'liq Tahrirlash">
                                     <i class="fas fa-edit"></i>
                                 </a>
+                                @endif
+                                @if($order->status !== 'completed')
+                                <button class="btn btn-outline-warning" onclick="showQuickStatus('{{ $order->id }}', '{{ $order->status }}')" title="Holat O'zgartirish">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                                @endif
+                                @if(in_array($order->status, ['preparing', 'ready']))
+                                <button class="btn btn-outline-success" onclick="quickServe('{{ $order->id }}')" title="Tez Xizmat">
+                                    <i class="fas fa-hand-paper"></i>
                                 </button>
                                 @endif
                             </div>
@@ -122,7 +130,7 @@
                 </tbody>
             </table>
         </div>
-        
+
         <div class="d-flex justify-content-center">
             {{ $orders->links() }}
         </div>
@@ -130,7 +138,7 @@
 </div>
 
 <!-- Status Update Modal -->
-<div class="modal fade" id="statusModal" tabindex="-1">
+<div class="modal fade" id="orderStatusModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -138,19 +146,15 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="statusForm">
-                    <div class="mb-3">
-                        <label class="form-label">Yangi Holat</label>
-                        <select class="form-control" id="newStatus" required>
-                            <option value="pending">Kutilmoqda</option>
-                            <option value="completed">Tugallangan</option>
-                        </select>
-                    </div>
-                </form>
+                <p>Buyurtma holatini tanlang:</p>
+                <select class="form-control" id="orderStatusSelect">
+                    <option value="pending">Kutilmoqda</option>
+                    <option value="completed">Tugallangan</option>
+                </select>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
-                <button type="button" class="btn btn-primary" onclick="saveStatus()">Saqlash</button>
+                <button type="button" class="btn btn-primary" onclick="updateOrderStatus()">O'zgartirish</button>
             </div>
         </div>
     </div>
@@ -159,21 +163,25 @@
 
 @section('scripts')
 <script>
-let currentOrderId = null;
-
-function updateStatus(orderId) {
-    currentOrderId = orderId;
-    new bootstrap.Modal(document.getElementById('statusModal')).show();
+function showQuickStatus(orderId, currentStatus) {
+    const modal = new bootstrap.Modal(document.getElementById('quickStatusModal'));
+    document.getElementById('currentOrderId').value = orderId;
+    document.getElementById('quickStatusSelect').value = currentStatus;
+    modal.show();
 }
 
-function saveStatus() {
-    const status = document.getElementById('newStatus').value;
-    
-    fetch(`/orders/${currentOrderId}/status`, {
+function quickServe(orderId) {
+    if (confirm('Bu buyurtmani berildi deb belgilaysizmi?')) {
+        updateOrderQuickStatus(orderId, 'served');
+    }
+}
+
+function updateOrderQuickStatus(orderId, status) {
+    fetch(`/orders/${orderId}/quick-status`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
         body: JSON.stringify({ status: status })
     })
@@ -181,8 +189,85 @@ function saveStatus() {
     .then(data => {
         if (data.success) {
             location.reload();
+        } else {
+            alert('Xatolik yuz berdi');
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Xatolik yuz berdi');
     });
 }
+
+function applyQuickStatus() {
+    const orderId = document.getElementById('currentOrderId').value;
+    const newStatus = document.getElementById('quickStatusSelect').value;
+    
+    updateOrderQuickStatus(orderId, newStatus);
+    bootstrap.Modal.getInstance(document.getElementById('quickStatusModal')).hide();
+}
+</script>
+
+<div class="modal fade" id="quickStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tezkor Holat O'zgartirish</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="currentOrderId">
+                <div class="mb-3">
+                    <label class="form-label">Yangi Holat:</label>
+                    <select class="form-control" id="quickStatusSelect">
+                        <option value="pending">Kutilmoqda</option>
+                        <option value="completed">Tugallangan</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor</button>
+                <button type="button" class="btn btn-primary" onclick="applyQuickStatus()">O'zgartirish</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    let currentOrderId = null;
+
+    function showStatusModal(orderId, currentStatus) {
+        currentOrderId = orderId;
+        document.getElementById('orderStatusSelect').value = currentStatus;
+        new bootstrap.Modal(document.getElementById('orderStatusModal')).show();
+    }
+
+    function updateOrderStatus() {
+        const newStatus = document.getElementById('orderStatusSelect').value;
+
+        fetch(`/orders/${currentOrderId}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    status: newStatus
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Xatolik yuz berdi');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Xatolik yuz berdi');
+            });
+
+        bootstrap.Modal.getInstance(document.getElementById('orderStatusModal')).hide();
+    }
 </script>
 @endsection

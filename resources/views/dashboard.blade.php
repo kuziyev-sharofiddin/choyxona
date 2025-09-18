@@ -362,9 +362,6 @@
                     <button class="btn btn-info" onclick="viewRoomDetails()">
                         <i class="fas fa-eye"></i> Xona Ma'lumotlari
                     </button>
-                    <button class="btn btn-warning" onclick="setMaintenance()">
-                        <i class="fas fa-tools"></i> Ta'mirga Jo'natish
-                    </button>
                 </div>
             </div>
         </div>

@@ -80,7 +80,7 @@
                                 <th>Holat:</th>
                                 <td>
                                     @if($payment->status === 'completed')
-                                        <span class="badge bg-success">Tugallangan</span>
+                                        <span class="badge bg-secondary">Tugallangan</span>
                                     @elseif($payment->status === 'pending')
                                         <span class="badge bg-warning">Kutilmoqda</span>
                                     @else

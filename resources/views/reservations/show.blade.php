@@ -208,7 +208,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="mb-0">Buyurtma #{{ $order->order_number ?? $order->id }}</h6>
                         <div>
-                            <span class="badge bg-{{ $order->status === 'completed' ? 'success' : ($order->status === 'preparing' ? 'warning' : 'info') }}">
+                            <span class="badge bg-{{ $order->status === 'completed' ? 'secondary' : 'warning' }}">
                                 @switch($order->status)
                                     @case('pending') Kutilmoqda @break
                                     @default Tugallangan
@@ -305,7 +305,7 @@
                         <div>
                             <small>{{ $payment->created_at->format('d.m.Y H:i') }}</small>
                             <br><span class="badge bg-{{ $payment->status === 'completed' ? 'success' : 'warning' }}">
-                                {{ $payment->payment_method ?? 'cash' }}
+                                {{ $payment->payment_method === "cash" ? "Naqd pul" : "Plastik karta" }}
                             </span>
                         </div>
                         <strong>{{ number_format($payment->amount) }} so'm</strong>

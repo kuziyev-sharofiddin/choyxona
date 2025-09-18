@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\OrderItem;
 use App\Models\Reservation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -110,140 +111,176 @@ class OrderController extends Controller
     }
     public function edit(Order $order)
     {
-        $order->load(['items.product.category', 'reservation.room', 'customer', 'waiter']);
-        $categories = Category::with(['products' => function ($query) {
-            $query->where('is_available', true);
-        }])->where('is_active', true)->orderBy('sort_order')->get();
-
-        return view('orders.edit', compact('order', 'categories'));
+        // Load all necessary relationships
+        $order->load(['reservation.room', 'customer', 'waiter', 'items.product.category']);
+        
+        return view('orders.edit', compact('order'));
     }
     public function update(Request $request, Order $order)
     {
+        // Validate basic order data
         $request->validate([
             'status' => 'required|in:pending,preparing,ready,served,completed',
             'discount_amount' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string',
+            'notes' => 'nullable|string|max:1000',
             'items' => 'nullable|array',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.status' => 'required|in:pending,preparing,ready,served,returned',
-            'items.*.special_instructions' => 'nullable|string',
-            'items.*.remove' => 'nullable|boolean',
-            'new_items' => 'nullable|array',
-            'new_items.*.product_id' => 'required|exists:products,id',
-            'new_items.*.quantity' => 'required|integer|min:1',
-            'new_items.*.unit_price' => 'required|numeric|min:0',
-            'new_items.*.status' => 'required|in:pending,preparing,ready',
-            'new_items.*.special_instructions' => 'nullable|string',
+            'items.*.product_id' => 'required_with:items|exists:products,id',
+            'items.*.quantity' => 'required_with:items|integer|min:0',
+            'items.*.unit_price' => 'required_with:items|numeric|min:0',
+            'items.*.status' => 'required_with:items|in:pending,preparing,ready,served'
         ]);
 
-        \DB::transaction(function () use ($request, $order) {
-            // Update order basic info
+        DB::beginTransaction();
+        
+        try {
+            // Check if order can be edited
+            $canEditItems = in_array($order->status, ['pending']) && 
+                           in_array($request->status, ['pending', 'preparing']);
+            
+            // Update basic order info
             $order->update([
                 'status' => $request->status,
                 'discount_amount' => $request->discount_amount ?? 0,
                 'notes' => $request->notes,
             ]);
 
-            // Handle existing items
-            if ($request->items) {
-                foreach ($request->items as $itemId => $itemData) {
-                    $orderItem = $order->items()->find($itemId);
+            // Handle order items only if editing is allowed
+            if ($canEditItems && $request->has('items')) {
+                // Get current item IDs
+                $currentItemIds = $order->items->pluck('id')->toArray();
+                $updatedItemIds = [];
 
-                    if ($orderItem) {
-                        if (isset($itemData['remove']) && $itemData['remove']) {
-                            // Remove item (soft delete or hard delete based on business logic)
-                            if ($itemData['status'] === 'served') {
-                                // If already served, mark as returned instead of deleting
-                                $orderItem->update([
-                                    'status' => 'returned',
-                                    'special_instructions' => 'Qaytarildi: ' . ($itemData['special_instructions'] ?? '')
+                foreach ($request->items as $itemData) {
+                    if (isset($itemData['quantity']) && $itemData['quantity'] > 0) {
+                        if (isset($itemData['id']) && $itemData['id']) {
+                            // Update existing item
+                            $item = OrderItem::find($itemData['id']);
+                            if ($item && $item->order_id == $order->id) {
+                                $item->update([
+                                    'quantity' => $itemData['quantity'],
+                                    'total_price' => $itemData['unit_price'] * $itemData['quantity'],
+                                    'status' => $itemData['status'] ?? 'pending'
                                 ]);
-                            } else {
-                                // If not served yet, can safely delete
-                                $orderItem->delete();
+                                $updatedItemIds[] = $item->id;
                             }
                         } else {
-                            // Update existing item
-                            $totalPrice = $orderItem->unit_price * $itemData['quantity'];
-                            $orderItem->update([
+                            // Create new item
+                            $newItem = OrderItem::create([
+                                'order_id' => $order->id,
+                                'product_id' => $itemData['product_id'],
                                 'quantity' => $itemData['quantity'],
-                                'total_price' => $totalPrice,
-                                'status' => $itemData['status'],
-                                'special_instructions' => $itemData['special_instructions'],
+                                'unit_price' => $itemData['unit_price'],
+                                'total_price' => $itemData['unit_price'] * $itemData['quantity'],
+                                'status' => $itemData['status'] ?? 'pending'
+                            ]);
+                            $updatedItemIds[] = $newItem->id;
+                        }
+                    }
+                }
+
+                // Remove items that were deleted
+                $itemsToDelete = array_diff($currentItemIds, $updatedItemIds);
+                if (!empty($itemsToDelete)) {
+                    OrderItem::whereIn('id', $itemsToDelete)->delete();
+                }
+            } elseif (!$canEditItems && $request->has('items')) {
+                // Only update status of existing items if order can't be fully edited
+                foreach ($request->items as $itemData) {
+                    if (isset($itemData['id']) && $itemData['id']) {
+                        $item = OrderItem::find($itemData['id']);
+                        if ($item && $item->order_id == $order->id) {
+                            $item->update([
+                                'status' => $itemData['status'] ?? $item->status
                             ]);
                         }
                     }
                 }
             }
 
-            // Handle new items
-            if ($request->new_items) {
-                foreach ($request->new_items as $newItemData) {
-                    $totalPrice = $newItemData['unit_price'] * $newItemData['quantity'];
+            // Recalculate totals
+            $this->recalculateOrderTotals($order);
 
-                    $order->items()->create([
-                        'product_id' => $newItemData['product_id'],
-                        'quantity' => $newItemData['quantity'],
-                        'unit_price' => $newItemData['unit_price'],
-                        'total_price' => $totalPrice,
-                        'status' => $newItemData['status'],
-                        'special_instructions' => $newItemData['special_instructions'],
-                    ]);
-                }
+            // If order is completed, update customer stats
+            if ($request->status === 'completed' && $order->status !== 'completed') {
+                $customer = $order->customer;
+                $customer->increment('total_spent', $order->total_amount);
             }
 
-            // Recalculate order totals
-            $order->calculateTotal();
-        });
+            DB::commit();
 
-        // Handle different submit actions
-        if ($request->action === 'save_and_print') {
             return redirect()->route('orders.show', $order)
-                ->with('success', 'Buyurtma yangilandi!')
-                ->with('print', true);
+                           ->with('success', 'Buyurtma muvaffaqiyatli yangilandi!');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->withErrors(['error' => 'Buyurtmani yangilashda xatolik: ' . $e->getMessage()]);
         }
-
-        return redirect()->route('orders.show', $order)
-            ->with('success', 'Buyurtma muvaffaqiyatli yangilandi!');
     }
-
+    private function recalculateOrderTotals(Order $order)
+{
+    // Elementlar summasi
+    $subtotal = $order->items()->sum('total_price');
+    
+    $taxAmount = 0; // No tax
+    
+    // Use config for commission rate
+    $commissionRate = config('choyxona.waiter_commission_rate', 0.10);
+    
+    // Commission faqat dine_in uchun
+    $waiterCommission = $order->order_type === 'dine_in' ? $subtotal * $commissionRate : 0;
+    
+    // Delivery fee faqat delivery uchun (ikki marta $ belgisi xato edi)
+    $additionalFee = $order->order_type === 'delivery' ? $order->delivery_fee : 0;
+    
+    // Umumiy summani hisoblash
+    $totalAmount = $subtotal + $additionalFee + $waiterCommission - ($order->discount_amount ?? 0);
+    
+    // Barcha ma'lumotlarni yangilash
+    $order->update([
+        'subtotal' => $subtotal,
+        'tax_amount' => $taxAmount,
+        'waiter_commission' => $waiterCommission,
+        'total_amount' => $totalAmount
+    ]);
+}
     public function updateStatus(Request $request, Order $order)
     {
-        try {
-            // Validatsiya
-            $request->validate([
-                'status' => 'required|in:pending,preparing,ready,served,completed'
-            ]);
+        $request->validate([
+            'status' => 'required|in:pending,preparing,ready,served,completed'
+        ]);
 
-            // Status va vaqtni bir vaqtning o'zida yangilash
-            $updateData = ['status' => $request->status];
+        $oldStatus = $order->status;
+        $order->update(['status' => $request->status]);
 
-            // Agar "completed" bo'lsa, tugallanish vaqtini qo'shish
-            if ($request->status === 'completed') {
-                $updateData['completed_time'] = now();
-            }
-
-            $order->update($updateData);
-
-            // AJAX uchun JSON javob
-            return response()->json([
-                'success' => true,
-                'message' => 'Buyurtma holati muvaffaqiyatli o\'zgartirildi',
-                'order' => $order->fresh(), // Yangilangan ma'lumot
-                'status' => $request->status
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validatsiya xatosi',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Server xatosi: ' . $e->getMessage()
-            ], 500);
+        // Set served time when status changes to served
+        if ($request->status === 'served' && $oldStatus !== 'served') {
+            $order->update(['served_time' => now()]);
         }
+
+        // Update customer stats when completed
+        if ($request->status === 'completed' && $oldStatus !== 'completed') {
+            $order->customer->increment('total_spent', $order->total_amount);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Holat yangilandi']);
+    }
+    public function quickStatusUpdate(Request $request, Order $order)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,preparing,ready,served,completed'
+        ]);
+
+        $order->update(['status' => $request->status]);
+
+        if ($request->status === 'served') {
+            $order->update(['served_time' => now()]);
+        }
+
+        return response()->json([
+            'success' => true, 
+            'message' => 'Buyurtma holati yangilandi',
+            'new_status' => $request->status
+        ]);
     }
 
     // Kitchen display for orders
@@ -273,6 +310,82 @@ class OrderController extends Controller
             'orders' => $orders,
             'count' => $orders->count()
         ]);
+    }
+    public function bulkStatusUpdate(Request $request)
+    {
+        $request->validate([
+            'order_ids' => 'required|array',
+            'order_ids.*' => 'exists:orders,id',
+            'status' => 'required|in:preparing,ready,served'
+        ]);
+
+        $updated = Order::whereIn('id', $request->order_ids)
+                       ->update(['status' => $request->status]);
+
+        // Set served time for orders marked as served
+        if ($request->status === 'served') {
+            Order::whereIn('id', $request->order_ids)
+                 ->whereNull('served_time')
+                 ->update(['served_time' => now()]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$updated} ta buyurtma holati yangilandi"
+        ]);
+    }
+    public function getOrderStats()
+    {
+        $today = now()->toDateString();
+        
+        $stats = [
+            'today_orders' => Order::whereDate('order_time', $today)->count(),
+            'today_revenue' => Order::whereDate('order_time', $today)
+                                   ->where('status', 'completed')
+                                   ->sum('total_amount'),
+            'pending_orders' => Order::where('status', 'pending')->count(),
+            'preparing_orders' => Order::where('status', 'preparing')->count(),
+            'ready_orders' => Order::where('status', 'ready')->count(),
+            'avg_order_value' => Order::whereDate('order_time', $today)
+                                     ->avg('total_amount'),
+        ];
+
+        return response()->json($stats);
+    }
+    private function canEditOrder(Order $order, $newStatus = null)
+    {
+        $checkStatus = $newStatus ?? $order->status;
+        
+        // Can edit items only in pending status
+        $canEditItems = $order->status === 'pending';
+        
+        // Can change status in pending and preparing
+        $canChangeStatus = in_array($order->status, ['pending', 'preparing']);
+        
+        // Completed orders cannot be edited at all
+        $canEdit = $order->status !== 'completed';
+
+        return [
+            'can_edit' => $canEdit,
+            'can_edit_items' => $canEditItems,
+            'can_change_status' => $canChangeStatus,
+            'reason' => $this->getEditRestrictionReason($order->status)
+        ];
+    }
+    private function getEditRestrictionReason($status)
+    {
+        switch ($status) {
+            case 'completed':
+                return 'Tugallangan buyurtmalarni tahrirlash mumkin emas';
+            case 'served':
+                return 'Berilgan buyurtmalarda faqat holat o\'zgartirish mumkin';
+            case 'ready':
+                return 'Tayyor buyurtmalarda faqat holat o\'zgartirish mumkin';
+            case 'preparing':
+                return 'Tayyorlanayotgan buyurtmalarda faqat holat o\'zgartirish mumkin';
+            default:
+                return null;
+        }
     }
     // public function update(Request $request, Order $order)
     // {
