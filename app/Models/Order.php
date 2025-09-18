@@ -72,7 +72,7 @@ class Order extends Model
 
     public function calculateTotal()
     {
-        $this->subtotal = $this->items()->whereNotIn('status', ['returned'])->sum('total_price');
+        $this->subtotal = $this->items()->sum('total_price');
         $this->tax_amount = 0; // No tax
 
         // Use config for commission rate
