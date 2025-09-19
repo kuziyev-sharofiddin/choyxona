@@ -71,7 +71,7 @@
                             <br><small class="text-muted">{{ $order->order_time->format('d.m.Y H:i') }}</small>
                         </td>
                         <td>
-                            <strong>{{ $order->reservation->room->name_uz ?? "Ma'lumot yo'q" }}</strong>
+                            <strong>{{ $order->reservation->room->name_uz ??  "Faqat buyurtma" }}</strong>
                             <br><small>{{ $order->customer->name }}</small>
                             <br><small class="text-muted">{{ $order->customer->phone }}</small>
                         </td>
