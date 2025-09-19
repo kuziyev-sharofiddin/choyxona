@@ -19,7 +19,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <strong>Mijoz:</strong> {{ $order->customer->name }}<br>
-                            <strong>Xona:</strong> {{ $order->reservation->room->name_uz }}
+                            <strong>Xona:</strong> {{ $order->reservation->room->name_uz ??  "Ma'lumot yo'q" }}
                         </div>
                         <div class="col-md-6">
                             <strong>Ofitsiant:</strong> {{ $order->waiter->name }}<br>

@@ -137,12 +137,12 @@
                     <!-- Order Totals -->
                     <div class="mb-3">
                         <div class="d-flex justify-content-between">
-                            <span>Jami:</span>
+                            <span>Mahsulotlar:</span>
                             <span id="subtotal">0 so'm</span>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <span>Soliq (12%):</span>
-                            <span id="tax">0 so'm</span>
+                            <span>Xizmat haqi (10%):</span>
+                            <span id="serviceCharge">0 so'm</span>
                         </div>
                         <div class="d-flex justify-content-between">
                             <span>Chegirma:</span>
@@ -213,6 +213,7 @@
 <script>
 let orderItems = [];
 let currentProduct = null;
+const SERVICE_CHARGE_RATE = 0.10; // 10% xizmat haqi
 
 function addToOrder(productId, productName, productPrice) {
     currentProduct = {id: productId, name: productName, price: productPrice};
@@ -308,12 +309,12 @@ function updateOrderDisplay() {
 
 function calculateTotal() {
     const subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const tax = subtotal * 0.12;
+    const serviceCharge = subtotal * SERVICE_CHARGE_RATE; // 10% xizmat haqi
     const discount = parseFloat(document.getElementById('discount').value) || 0;
-    const total = subtotal + tax - discount;
+    const total = subtotal + serviceCharge - discount;
     
     document.getElementById('subtotal').textContent = subtotal.toLocaleString() + ' so\'m';
-    document.getElementById('tax').textContent = tax.toLocaleString() + ' so\'m';
+    document.getElementById('serviceCharge').textContent = serviceCharge.toLocaleString() + ' so\'m';
     document.getElementById('total').textContent = total.toLocaleString() + ' so\'m';
 }
 

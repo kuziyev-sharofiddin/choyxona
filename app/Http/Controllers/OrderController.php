@@ -50,7 +50,6 @@ class OrderController extends Controller
         return view('orders.create', compact('reservation', 'categories', 'popularProducts'));
     }
 
-
     public function store(Request $request)
     {
         $request->validate([
@@ -60,38 +59,52 @@ class OrderController extends Controller
             'products.*.quantity' => 'required|integer|min:1',
         ]);
 
-        $reservation = Reservation::find($request->reservation_id);
+        DB::beginTransaction();
+        
+        try {
+            $reservation = Reservation::find($request->reservation_id);
 
-        $order = Order::create([
-            'reservation_id' => $reservation->id,
-            'customer_id' => $reservation->customer_id,
-            'waiter_id' => auth()->id(),
-            'subtotal' => 0,
-            'total_amount' => 0,
-            'discount_amount' => $request->discount_amount ?? 0,
-            'notes' => $request->notes,
-        ]);
-
-        // Add order items
-        foreach ($request->products as $productData) {
-            $product = Product::find($productData['id']);
-            $totalPrice = $product->price * $productData['quantity'];
-
-            OrderItem::create([
-                'order_id' => $order->id,
-                'product_id' => $product->id,
-                'quantity' => $productData['quantity'],
-                'unit_price' => $product->price,
-                'total_price' => $totalPrice,
-                'special_instructions' => $productData['instructions'] ?? null,
+            // Create order with updated calculation logic
+            $order = Order::create([
+                'reservation_id' => $reservation->id,
+                'customer_id' => $reservation->customer_id,
+                'waiter_id' => auth()->id(),
+                'order_type' => 'dine_in', // Default type for reservation orders
+                'subtotal' => 0,
+                'tax_amount' => 0, // No tax anymore
+                'waiter_commission' => 0, // Will be calculated
+                'discount_amount' => $request->discount_amount ?? 0,
+                'total_amount' => 0,
+                'notes' => $request->notes,
             ]);
+
+            // Add order items
+            foreach ($request->products as $productData) {
+                $product = Product::find($productData['id']);
+                $totalPrice = $product->price * $productData['quantity'];
+
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'quantity' => $productData['quantity'],
+                    'unit_price' => $product->price,
+                    'total_price' => $totalPrice,
+                    'special_instructions' => $productData['instructions'] ?? null,
+                ]);
+            }
+
+            // Calculate totals with new logic
+            $order->calculateTotal();
+
+            DB::commit();
+
+            return redirect()->route('orders.show', $order)
+                            ->with('success', 'Buyurtma muvaffaqiyatli yaratildi!');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->withErrors(['error' => 'Buyurtma yaratishda xatolik: ' . $e->getMessage()]);
         }
-
-        // Calculate totals
-        $order->calculateTotal();
-
-        return redirect()->route('orders.show', $order)
-            ->with('success', 'Buyurtma muvaffaqiyatli yaratildi!');
     }
 
     public function show(Order $order)
