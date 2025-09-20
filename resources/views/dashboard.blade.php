@@ -206,7 +206,7 @@
                                 </td>
                                 <td>
                                     @if($order->status == 'pending')
-                                        <span class="badge bg-warning">Kutilmoqda</span>
+                                        <span class="badge bg-warning">Jarayonda</span>
                                     @elseif($order->status == 'completed')
                                         <span class="badge bg-secondary">Tugallangan</span>
                                     @endif
@@ -273,7 +273,7 @@
                                     @elseif($reservation->status == 'completed')
                                         <span class="badge bg-secondary">Tugallangan</span>
                                     @else
-                                        <span class="badge bg-warning">Kutilmoqda</span>
+                                        <span class="badge bg-warning">Jarayonda</span>
                                     @endif
                                 </td>
                             </tr>

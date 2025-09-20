@@ -2,14 +2,18 @@
 @extends('layouts.app')
 
 @section('title', 'Buyurtmani Tahrirlash')
-@section('page-title', 'Buyurtma #' . $order->order_number . ' ' . 
-    ($order->reservation->room && $order->reservation->room->name_uz ? 
-    '<span class="badge bg-primary"><i class="fas fa-utensils"></i> Ichkarida Ovqа</span>' : 
-    ' - Xona mavjud emas') . 
-    ' - Tahrirlash')
+@section('page-title')
+    Buyurtma #{{ $order->order_number }}
+    @if($order->reservation && $order->reservation->room && $order->reservation->room->name_uz)
+    <span class="badge bg-primary">
+    {{ $order->reservation->room->name_uz }} -xona
+    </span>
+@else
+    - Xona mavjud emas
+@endif
 
-
-
+    - Tahrirlash
+@endsection
 
 
 @section('content')
@@ -122,7 +126,7 @@
                                         @else
                                         <i class="fas fa-hourglass-half"></i> <strong>Holat:</strong> 
                                         @if($order->status === 'pending')
-                                            Kutilmoqda
+                                        Jarayonda
                                         @elseif($order->status === 'preparing')
                                             Tayyorlanmoqda
                                         @elseif($order->status === 'ready')
@@ -152,7 +156,7 @@
                             <i class="fas fa-plus"></i> Mahsulot Qo'shish
                         </button>
                         <select class="form-control form-control-sm d-inline" style="width: auto;" id="status" name="status" onchange="checkEditability()">
-                            <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Kutilmoqda</option>
+                            <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Jarayonda</option>
                             <option value="completed" {{ $order->status === 'completed' ? 'selected' : '' }}>Tugallangan</option>
                         </select>
                     </div>
@@ -201,7 +205,7 @@
                                 </div>
                                 <div class="col-md-2">
                                     <select class="form-control form-control-sm" name="items[{{ $index }}][status]">
-                                        <option value="pending" {{ $item->status === 'pending' ? 'selected' : '' }}>Kutilmoqda</option>
+                                        <option value="pending" {{ $item->status === 'pending' ? 'selected' : '' }}>Jarayonda</option>
                                         <option value="preparing" {{ $item->status === 'preparing' ? 'selected' : '' }}>Tayyorlanmoqda</option>
                                         <option value="ready" {{ $item->status === 'ready' ? 'selected' : '' }}>Tayyor</option>
                                         <option value="served" {{ $item->status === 'served' ? 'selected' : '' }}>Berildi</option>
@@ -290,22 +294,7 @@
                     <div class="d-grid gap-2 mt-3">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save"></i> Yangilash
-                        </button>
-                        
-                        @if($order->status === 'pending')
-                        <button type="button" class="btn btn-info" onclick="quickStatusChange('preparing')">
-                            <i class="fas fa-play"></i> Tayyorlashni Boshlash
-                        </button>
-                        @elseif($order->status === 'preparing')
-                        <button type="button" class="btn btn-success" onclick="quickStatusChange('ready')">
-                            <i class="fas fa-check"></i> Tayyor
-                        </button>
-                        @elseif($order->status === 'ready')
-                        <button type="button" class="btn btn-warning" onclick="quickStatusChange('served')">
-                            <i class="fas fa-hand-paper"></i> Berildi
-                        </button>
-                        @endif
-                        
+                        </button>    
                         <a href="{{ route('orders.show', $order) }}" class="btn btn-outline-secondary">
                             <i class="fas fa-eye"></i> Ko'rish
                         </a>
@@ -387,7 +376,7 @@ function checkEditability() {
     
     // Update button text
     if (!canEditItems) {
-        document.getElementById('addProductBtn').innerHTML = '<i class="fas fa-lock"></i> Faqat "Kutilmoqda" holatida tahrirlash mumkin';
+        document.getElementById('addProductBtn').innerHTML = '<i class="fas fa-lock"></i> Faqat "Jarayonda" holatida tahrirlash mumkin';
     } else {
         document.getElementById('addProductBtn').innerHTML = '<i class="fas fa-plus"></i> Mahsulot Qo\'shish';
     }
@@ -467,7 +456,7 @@ function calculateTotal() {
 function showAddProductModal() {
     const status = document.getElementById('status').value;
     if (status !== 'pending') {
-        alert('Faqat "Kutilmoqda" holatidagi buyurtmalarga mahsulot qo\'shish mumkin!');
+        alert('Faqat "Jarayonda" holatidagi buyurtmalarga mahsulot qo\'shish mumkin!');
         return;
     }
     new bootstrap.Modal(document.getElementById('addProductModal')).show();
@@ -510,7 +499,7 @@ function addProductToOrder(productId, productName, productPrice, quantity) {
             </div>
             <div class="col-md-2">
                 <select class="form-control form-control-sm" name="items[${itemCount}][status]">
-                    <option value="pending">Kutilmoqda</option>
+                    <option value="pending">Jarayonda</option>
                     <option value="preparing">Tayyorlanmoqda</option>
                     <option value="ready">Tayyor</option>
                     <option value="served">Berildi</option>

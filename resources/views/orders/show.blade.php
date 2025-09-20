@@ -53,7 +53,7 @@
                                 <th>Holat:</th>
                                 <td>
                                     @if($order->status === 'pending')
-                                    <span class="badge bg-warning">Kutilmoqda</span>
+                                    <span class="badge bg-warning">Jarayonda</span>
                                     @elseif($order->status === 'completed')
                                     <span class="badge bg-secondary">Tugallangan</span>
                                     @endif
@@ -185,7 +185,7 @@
                         <label for="newStatus" class="form-label">Yangi Holat</label>
                         <select class="form-select" id="newStatus" required>
                             <option value="">Holatni tanlang...</option>
-                            <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Kutilmoqda</option>
+                            <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Jarayonda</option>
                             <option value="completed" {{ $order->status === 'completed' ? 'selected' : '' }}>Tugallandi</option>
                         </select>
                     </div>

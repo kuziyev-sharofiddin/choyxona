@@ -25,32 +25,8 @@
     <div class="col-md-2">
         <div class="card text-white bg-warning">
             <div class="card-body text-center">
-                <h6>Kutilayotgan</h6>
+                <h6>Jarayonda</h6>
                 <h4>{{ $orders->where('status', 'pending')->count() }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card text-white bg-info">
-            <div class="card-body text-center">
-                <h6>Tayyorlanmoqda</h6>
-                <h4>{{ $orders->where('status', 'preparing')->count() }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card text-white bg-success">
-            <div class="card-body text-center">
-                <h6>Tayyor</h6>
-                <h4>{{ $orders->where('status', 'ready')->count() }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card text-white bg-primary">
-            <div class="card-body text-center">
-                <h6>Berilgan</h6>
-                <h4>{{ $orders->where('status', 'served')->count() }}</h4>
             </div>
         </div>
     </div>
@@ -112,10 +88,7 @@
                 <label class="form-label">Holat</label>
                 <select class="form-control" name="status" onchange="this.form.submit()">
                     <option value="">Barcha holatlar</option>
-                    <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Kutilayotgan</option>
-                    <option value="preparing" {{ request('status') === 'preparing' ? 'selected' : '' }}>Tayyorlanmoqda</option>
-                    <option value="ready" {{ request('status') === 'ready' ? 'selected' : '' }}>Tayyor</option>
-                    <option value="served" {{ request('status') === 'served' ? 'selected' : '' }}>Berilgan</option>
+                    <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Jarayonda</option>
                     <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Tugallangan</option>
                 </select>
             </div>
@@ -266,14 +239,8 @@
                         </td>
                         <td>
                             @if($order->status === 'pending')
-                                <span class="badge bg-warning">Kutilmoqda</span>
-                            @elseif($order->status === 'preparing')
-                                <span class="badge bg-info">Tayyorlanmoqda</span>
-                            @elseif($order->status === 'ready')
-                                <span class="badge bg-success">Tayyor</span>
-                            @elseif($order->status === 'served')
-                                <span class="badge bg-primary">Berildi</span>
-                            @else
+                                <span class="badge bg-warning">Jarayonda</span>
+                            @elseif($order->status === 'completed')
                                 <span class="badge bg-secondary">Tugallangan</span>
                             @endif
                         </td>
@@ -364,10 +331,7 @@
                 <div class="mb-3">
                     <label class="form-label">Yangi Holat:</label>
                     <select class="form-control" id="quickStatusSelect">
-                        <option value="pending">Kutilmoqda</option>
-                        <option value="preparing">Tayyorlanmoqda</option>
-                        <option value="ready">Tayyor</option>
-                        <option value="served">Berildi</option>
+                        <option value="pending">Jarayonda</option>
                         <option value="completed">Tugallangan</option>
                     </select>
                 </div>

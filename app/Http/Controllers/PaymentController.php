@@ -39,7 +39,7 @@ class PaymentController extends Controller
     public function edit(Payment $payment)
     {
         if ($payment->status !== 'pending') {
-            return back()->withErrors(['error' => 'Faqat kutilayotgan to\'lovlarni tahrirlash mumkin!']);
+            return back()->withErrors(['error' => 'Faqat jarayonda to\'lovlarni tahrirlash mumkin!']);
         }
 
         return view('payments.edit', compact('payment'));
@@ -90,7 +90,7 @@ class PaymentController extends Controller
         ]);
 
         if ($payment->status !== 'pending') {
-            return back()->withErrors(['error' => 'Faqat kutilayotgan to\'lovlarni tahrirlash mumkin!']);
+            return back()->withErrors(['error' => 'Faqat jarayonda to\'lovlarni tahrirlash mumkin!']);
         }
 
         $payment->update($request->only(['amount', 'payment_method', 'notes']));

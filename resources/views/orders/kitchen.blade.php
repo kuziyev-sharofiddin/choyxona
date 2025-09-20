@@ -26,7 +26,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6>Kutilayotgan</h6>
+                        <h6>Jarayonda</h6>
                         <h3 id="pendingCount">{{ $orders->where('status', 'pending')->count() }}</h3>
                     </div>
                     <i class="fas fa-clock fa-2x opacity-75"></i>
@@ -75,7 +75,7 @@
                 </div>
                 <div class="text-end">
                     <span class="badge bg-{{ $order->status === 'pending' ? 'warning' : ($order->status === 'preparing' ? 'info' : 'success') }}">
-                        @if($order->status === 'pending') Kutilmoqda
+                        @if($order->status === 'pending') Jarayonda
                         @else Tugallangan
                         @endif
                     </span>

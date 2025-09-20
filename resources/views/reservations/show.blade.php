@@ -210,7 +210,7 @@
                         <div>
                             <span class="badge bg-{{ $order->status === 'completed' ? 'secondary' : 'warning' }}">
                                 @switch($order->status)
-                                    @case('pending') Kutilmoqda @break
+                                    @case('pending') Jarayonda @break
                                     @default Tugallangan
                                 @endswitch
                             </span>

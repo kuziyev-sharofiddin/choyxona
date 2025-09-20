@@ -39,7 +39,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6>Kutilayotgan</h6>
+                        <h6>Jarayonda</h6>
                         <h4>{{ $payments->where('status', 'pending')->count() }}</h4>
                     </div>
                     <i class="fas fa-clock fa-2x opacity-75"></i>
@@ -123,7 +123,7 @@
                             @if($payment->status === 'completed')
                                 <span class="badge bg-secondary">Tugallangan</span>
                             @elseif($payment->status === 'pending')
-                                <span class="badge bg-warning">Kutilmoqda</span>
+                                <span class="badge bg-warning">Jarayonda</span>
                             @else
                                 <span class="badge bg-danger">Xato</span>
                             @endif

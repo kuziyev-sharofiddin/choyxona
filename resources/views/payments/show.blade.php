@@ -82,7 +82,7 @@
                                     @if($payment->status === 'completed')
                                         <span class="badge bg-secondary">Tugallangan</span>
                                     @elseif($payment->status === 'pending')
-                                        <span class="badge bg-warning">Kutilmoqda</span>
+                                        <span class="badge bg-warning">Jarayonda</span>
                                     @else
                                         <span class="badge bg-danger">Xato</span>
                                     @endif
