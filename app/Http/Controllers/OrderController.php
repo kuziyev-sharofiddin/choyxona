@@ -13,21 +13,150 @@ use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
-    public function index()
-    {
-        $orders = Order::with(['reservation.room', 'customer', 'waiter'])
-            ->orderBy('order_time', 'desc')
-            ->paginate(20);
+    public function index(Request $request)
+{
+    $query = Order::with(['reservation.room', 'customer', 'waiter']);
 
-        $stats = [
-            'dine_in' => Order::where('order_type', 'dine_in')->whereDate('order_time', today())->count(),
-            'takeaway' => Order::where('order_type', 'takeaway')->whereDate('order_time', today())->count(),
-            'delivery' => Order::where('order_type', 'delivery')->whereDate('order_time', today())->count(),
-            'total_today' => Order::whereDate('order_time', today())->count(),
-        ];
-
-        return view('orders.index', compact('orders', 'stats'));
+    // Order type filter
+    if ($request->filled('order_type')) {
+        $query->where('order_type', $request->order_type);
     }
+
+    // Status filter
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    }
+
+    // Date filter
+    if ($request->filled('date')) {
+        $query->whereDate('order_time', $request->date);
+    }
+
+    // Date range filter
+    if ($request->filled('start_date') && $request->filled('end_date')) {
+        $query->whereBetween('order_time', [
+            $request->start_date . ' 00:00:00',
+            $request->end_date . ' 23:59:59'
+        ]);
+    }
+
+    // Search filter (optional - by order number or customer name)
+    if ($request->filled('search')) {
+        $searchTerm = $request->search;
+        $query->where(function($q) use ($searchTerm) {
+            $q->where('order_number', 'LIKE', "%{$searchTerm}%")
+              ->orWhere('customer_name', 'LIKE', "%{$searchTerm}%")
+              ->orWhere('customer_phone', 'LIKE', "%{$searchTerm}%")
+              ->orWhereHas('customer', function($q2) use ($searchTerm) {
+                  $q2->where('name', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('phone', 'LIKE', "%{$searchTerm}%");
+              });
+        });
+    }
+
+    // Pagination with query parameters preserved
+    $perPage = $request->get('per_page', 20); // Default 20 items per page
+    if (!in_array($perPage, [10, 20, 50, 100])) {
+        $perPage = 20;
+    }
+
+    $orders = $query->orderBy('order_time', 'desc')
+                   ->paginate($perPage)
+                   ->appends($request->query()); // Keep all query parameters in pagination links
+
+    // Statistics for cards (with filters applied)
+    $filteredQuery = Order::query();
+    
+    // Apply same filters to statistics
+    if ($request->filled('date')) {
+        $filteredQuery->whereDate('order_time', $request->date);
+    }
+    if ($request->filled('start_date') && $request->filled('end_date')) {
+        $filteredQuery->whereBetween('order_time', [
+            $request->start_date . ' 00:00:00',
+            $request->end_date . ' 23:59:59'
+        ]);
+    }
+
+    $stats = [
+        'pending' => (clone $filteredQuery)->where('status', 'pending')->count(),
+        'preparing' => (clone $filteredQuery)->where('status', 'preparing')->count(),
+        'ready' => (clone $filteredQuery)->where('status', 'ready')->count(),
+        'served' => (clone $filteredQuery)->where('status', 'served')->count(),
+        'completed' => (clone $filteredQuery)->where('status', 'completed')->count(),
+        'dine_in' => (clone $filteredQuery)->where('order_type', 'dine_in')->count(),
+        'takeaway' => (clone $filteredQuery)->where('order_type', 'takeaway')->count(),
+        'delivery' => (clone $filteredQuery)->where('order_type', 'delivery')->count(),
+    ];
+
+    // Today's statistics (for the cards shown in view)
+    $todayStats = [
+        'dine_in' => Order::where('order_type', 'dine_in')->whereDate('order_time', today())->count(),
+        'takeaway' => Order::where('order_type', 'takeaway')->whereDate('order_time', today())->count(),
+        'delivery' => Order::where('order_type', 'delivery')->whereDate('order_time', today())->count(),
+        'total_today' => Order::whereDate('order_time', today())->count(),
+    ];
+
+    return view('orders.index', compact('orders', 'stats', 'todayStats'));
+}
+
+// Custom pagination view method (optional)
+public function getAllOrders(Request $request)
+{
+    $query = Order::with(['reservation.room', 'customer', 'waiter']);
+    
+    // Apply filters
+    if ($request->filled('order_type')) {
+        $query->where('order_type', $request->order_type);
+    }
+    
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    }
+    
+    if ($request->filled('date')) {
+        $query->whereDate('order_time', $request->date);
+    }
+
+    // Simple pagination for API or AJAX requests
+    $orders = $query->orderBy('order_time', 'desc')
+                   ->simplePaginate(20);
+    
+    return response()->json([
+        'orders' => $orders->items(),
+        'has_more_pages' => $orders->hasMorePages(),
+        'next_page_url' => $orders->nextPageUrl(),
+        'current_page' => $orders->currentPage()
+    ]);
+}
+
+// Infinite scroll method
+public function getOrdersInfinite(Request $request)
+{
+    $page = $request->get('page', 1);
+    $perPage = 20;
+    
+    $query = Order::with(['reservation.room', 'customer', 'waiter']);
+    
+    // Apply filters
+    if ($request->filled('order_type')) {
+        $query->where('order_type', $request->order_type);
+    }
+    
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    }
+
+    $orders = $query->orderBy('order_time', 'desc')
+                   ->offset(($page - 1) * $perPage)
+                   ->limit($perPage)
+                   ->get();
+    
+    return response()->json([
+        'orders' => $orders,
+        'has_more' => $orders->count() === $perPage
+    ]);
+}
 
     public function create(Request $request)
     {

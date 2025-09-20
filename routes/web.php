@@ -34,7 +34,7 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/api/dashboard/stats', [DashboardController::class, 'dashboardStats'])->name('dashboard.stats');
-    
+
     // Reservations
     Route::resource('reservations', ReservationController::class);
     Route::post('reservations/{reservation}/checkin', [ReservationController::class, 'checkIn'])->name('reservations.checkin');
@@ -43,12 +43,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('reservations/bulk-update', [ReservationController::class, 'bulkUpdate'])->name('reservations.bulk-update');
     Route::post('reservations/bulk-export', [ReservationController::class, 'bulkExport'])->name('reservations.bulk-export');
     Route::get('reservations/{reservation}/receipt', [ReservationController::class, 'receipt'])->name('reservations.receipt');
-    
+
     // Rooms
     Route::resource('rooms', RoomController::class);
     Route::post('rooms/{room}/maintenance', [RoomController::class, 'setMaintenance'])->name('rooms.maintenance');
     Route::get('rooms/{room}/availability', [RoomController::class, 'checkAvailability'])->name('rooms.availability');
-    
+
     // Orders
     Route::resource('orders', OrderController::class);
     Route::get('kitchen', [OrderController::class, 'kitchen'])->name('orders.kitchen');
@@ -60,25 +60,27 @@ Route::middleware(['auth'])->group(function () {
     Route::post('orders/bulk-status', [OrderController::class, 'bulkStatusUpdate'])->name('orders.bulk-status');
     Route::get('api/kitchen/orders', [OrderController::class, 'getKitchenOrders'])->name('api.kitchen.orders');
     Route::get('api/orders/stats', [OrderController::class, 'getOrderStats'])->name('api.orders.stats');
-    
+    Route::get('/orders/all', [OrderController::class, 'getAllOrders'])->name('orders.all');
+    Route::get('/orders/infinite', [OrderController::class, 'getOrdersInfinite'])->name('orders.infinite');
+
     // Products
     Route::resource('products', ProductController::class);
     Route::post('products/{product}/toggle', [ProductController::class, 'toggleAvailability'])->name('products.toggle');
-    
+
     // Categories
     Route::resource('categories', CategoryController::class);
-    
+
     // Customers
     Route::resource('customers', CustomerController::class);
-    
+
     // Employees
     Route::resource('employees', EmployeeController::class);
     Route::post('employees/{employee}/toggle', [EmployeeController::class, 'toggleStatus'])->name('employees.toggle');
-    
+
     // Payments
     Route::resource('payments', PaymentController::class);
     Route::post('payments/{payment}/process', [PaymentController::class, 'process'])->name('payments.process');
-    
+
     // Reports
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('reports/daily', [ReportController::class, 'daily'])->name('reports.daily');
@@ -86,7 +88,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('reports/products', [ReportController::class, 'products'])->name('reports.products');
     Route::get('reports/employees', [ReportController::class, 'employees'])->name('reports.employees');
     Route::get('reports/custom', [ReportController::class, 'custom'])->name('reports.custom');
-    
+
     // API Routes for AJAX
     Route::prefix('api')->group(function () {
         Route::get('rooms/available', [RoomController::class, 'getAvailableRooms']);
