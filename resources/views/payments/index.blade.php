@@ -101,7 +101,9 @@
                             <br><small class="text-muted">{{ $payment->reservation->room->name_uz }}</small>
                         </td>
                         @else
-                        <td>Ma'lumot yo'q</td>
+                        <td><a href="{{ route('payments.show', $payment->order) }}">
+                        {{ $payment->order->order_number }}
+                            </a></td>
                         @endif
                         <td>
                             <strong class="text-success">{{ number_format($payment->amount) }} so'm</strong>
