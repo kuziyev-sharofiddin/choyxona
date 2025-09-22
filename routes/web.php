@@ -62,6 +62,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('api/orders/stats', [OrderController::class, 'getOrderStats'])->name('api.orders.stats');
     Route::get('/orders/all', [OrderController::class, 'getAllOrders'])->name('orders.all');
     Route::get('/orders/infinite', [OrderController::class, 'getOrdersInfinite'])->name('orders.infinite');
+    Route::post('orders/{order}/payment', [OrderController::class, 'processPayment'])->name('orders.payment');
+    Route::get('orders/{order}/receipt', [OrderController::class, 'generateReceipt'])->name('orders.receipt');
 
     // Products
     Route::resource('products', ProductController::class);

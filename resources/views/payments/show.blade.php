@@ -11,9 +11,9 @@
                 <h5 class="mb-0">
                     <i class="fas fa-credit-card"></i> To'lov Ma'lumotlari
                     @if($payment->order_id)
-                        <span class="badge bg-success">Buyurtma To'lovi</span>
+                    <span class="badge bg-success">Buyurtma To'lovi</span>
                     @else
-                        <span class="badge bg-info">Rezervatsiya To'lovi</span>
+                    <span class="badge bg-info">Rezervatsiya To'lovi</span>
                     @endif
                 </h5>
             </div>
@@ -36,15 +36,15 @@
                                 <th>To'lov manbai:</th>
                                 <td>
                                     @if($payment->reservation_id)
-                                        <a href="{{ route('reservations.show', $payment->reservation) }}">
-                                            {{ $payment->getSourceDescription() }}
-                                        </a>
-                                        <br><small class="text-muted">Xona: {{ $payment->reservation->room->name_uz }}</small>
+                                    <a href="{{ route('reservations.show', $payment->reservation) }}">
+                                        {{ $payment->getSourceDescription() }}
+                                    </a>
+                                    <br><small class="text-muted">Xona: {{ $payment->reservation->room->name_uz }}</small>
                                     @elseif($payment->order_id)
-                                        <a href="{{ route('orders.show', $payment->order) }}">
-                                            {{ $payment->getSourceDescription() }}
-                                        </a>
-                                        <br><small class="text-muted">Xona mavjud emas</small>
+                                    <a href="{{ route('orders.show', $payment->order) }}">
+                                        {{ $payment->getSourceDescription() }}
+                                    </a>
+                                    <br><small class="text-muted">Xona mavjud emas</small>
                                     @endif
                                 </td>
                             </tr>
@@ -60,11 +60,11 @@
                                 <th>To'lov usuli:</th>
                                 <td>
                                     @if($payment->payment_method === 'cash')
-                                        <span class="badge bg-success">Naqd pul</span>
+                                    <span class="badge bg-success">Naqd pul</span>
                                     @elseif($payment->payment_method === 'card')
-                                        <span class="badge bg-info">Plastik karta</span>
+                                    <span class="badge bg-info">Plastik karta</span>
                                     @else
-                                        <span class="badge bg-warning">Bank o'tkazmasi</span>
+                                    <span class="badge bg-warning">Bank o'tkazmasi</span>
                                     @endif
                                 </td>
                             </tr>
@@ -80,11 +80,11 @@
                                 <th>Holat:</th>
                                 <td>
                                     @if($payment->status === 'completed')
-                                        <span class="badge bg-secondary">Tugallangan</span>
+                                    <span class="badge bg-secondary">Tugallangan</span>
                                     @elseif($payment->status === 'pending')
-                                        <span class="badge bg-warning">Jarayonda</span>
+                                    <span class="badge bg-warning">Jarayonda</span>
                                     @else
-                                        <span class="badge bg-danger">Xato</span>
+                                    <span class="badge bg-danger">Xato</span>
                                     @endif
                                 </td>
                             </tr>
@@ -158,7 +158,7 @@
                     <h4>CHOYXONA</h4>
                     <p class="text-muted">To'lov Cheki</p>
                 </div>
-                
+
                 <hr>
                 <p><strong>Chek №:</strong> {{ $payment->payment_number }}</p>
                 <p><strong>Sana:</strong> {{ $payment->payment_time->format('d.m.Y H:i') }}</p>
@@ -172,7 +172,7 @@
                 <p>Xona mavjud emas</p>
                 @endif
                 <hr>
-                
+
                 <div class="d-flex justify-content-between">
                     <strong>To'lov summasi:</strong>
                     <strong>{{ number_format($payment->amount) }} so'm</strong>
@@ -185,16 +185,25 @@
                         @else O'tkazma @endif
                     </span>
                 </div>
-                
+
                 <hr>
                 <p class="text-center small text-muted">Xaridingiz uchun rahmat!</p>
-                
+
                 <div class="d-grid gap-2 mt-3">
-                <button class="btn btn-success">
-                        <a class="dropdown-item" href="{{ route('reservations.receipt', $payment->reservation) }}" target="_blank">
-    <i class="fas fa-receipt me-2"></i>Chekni Chop Etish
-</a>
-                    </button>
+                    @php
+                    $receiptRoute = isset($payment->reservation)
+                    ? route('reservations.receipt', $payment->reservation)
+                    : (isset($payment->order) ? route('orders.receipt', $payment->order) : null);
+                    @endphp
+
+                    @if($receiptRoute)
+                    <a href="{{ $receiptRoute }}"
+                        target="_blank"
+                        class="btn btn-success">
+                        <i class="fas fa-receipt me-2"></i>Chekni Chop Etish
+                    </a>
+                    @endif
+
                     @if($payment->status === 'pending')
                     <form action="{{ route('payments.process', $payment) }}" method="POST">
                         @csrf

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Customer;
@@ -15,7 +16,7 @@ class OrderController extends Controller
 {
     public function index(Request $request)
 {
-    $query = Order::with(['reservation.room', 'customer', 'waiter']);
+    $query = Order::with(['reservation.room', 'customer', 'waiter','payments']);
 
     // Order type filter
     if ($request->filled('order_type')) {
@@ -99,6 +100,65 @@ class OrderController extends Controller
 
     return view('orders.index', compact('orders', 'stats', 'todayStats'));
 }
+public function processPayment(Request $request, Order $order)
+{
+    $request->validate([
+        'amount' => 'required|numeric|min:1|max:' . $order->getRemainingAmount(),
+        'payment_method' => 'required|in:cash,card,transfer',
+        'notes' => 'nullable|string|max:500'
+    ]);
+
+    try {
+        DB::beginTransaction();
+
+        // Create payment record
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'amount' => $request->amount,
+            'payment_method' => $request->payment_method,
+            'cashier_id' => auth()->id(),
+            'payment_time' => now(),
+            'notes' => $request->notes,
+            'status' => 'completed'
+        ]);
+
+        // Update customer stats if fully paid
+        if ($order->isFullyPaid()) {
+            if ($order->order_type === 'dine_in' && $order->customer) {
+                $order->customer->increment('total_spent', $request->amount);
+            } elseif (in_array($order->order_type, ['takeaway', 'delivery'])) {
+                // Find or create customer for non-dine-in orders
+                $customer = Customer::firstOrCreate(
+                    ['phone' => $order->customer_phone],
+                    ['name' => $order->customer_name]
+                );
+                $customer->increment('total_spent', $request->amount);
+            }
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'To\'lov muvaffaqiyatli qabul qilindi!',
+            'payment_id' => $payment->id
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollback();
+        return response()->json([
+            'success' => false,
+            'message' => 'To\'lovni qabul qilishda xatolik: ' . $e->getMessage()
+        ], 500);
+    }
+}
+public function generateReceipt(Order $order)
+{
+    $order->load(['items.product', 'customer', 'waiter', 'payments']);
+    
+    return view('orders.receipt', compact('order'))->render();
+}
+
 
 // Custom pagination view method (optional)
 public function getAllOrders(Request $request)

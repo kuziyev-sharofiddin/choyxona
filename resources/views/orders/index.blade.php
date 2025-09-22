@@ -104,58 +104,7 @@
                 <label class="form-label">Gacha</label>
                 <input type="date" class="form-control" name="end_date" value="{{ request('end_date') }}">
             </div>
-            <div class="col-md-2">
-                <label class="form-label">Qidirish</label>
-                <div class="input-group">
-                    <input type="text" class="form-control" name="search" value="{{ request('search') }}" placeholder="Buyurtma, mijoz...">
-                    <button type="submit" class="btn btn-outline-primary">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-            </div>
         </form>
-        
-        <!-- Active Filters Display -->
-        @if(request()->hasAny(['order_type', 'status', 'date', 'start_date', 'end_date', 'search']))
-        <div class="mt-3">
-            <small class="text-muted">Faol filtrlar:</small>
-            <div class="d-flex flex-wrap gap-1 mt-1">
-                @if(request('order_type'))
-                    <span class="badge bg-primary">
-                        Tur: {{ ['dine_in' => 'Ichkarida', 'takeaway' => 'Olib ketish', 'delivery' => 'Yetkazib berish'][request('order_type')] }}
-                        <a href="{{ request()->fullUrlWithQuery(['order_type' => null]) }}" class="text-white ms-1">×</a>
-                    </span>
-                @endif
-                @if(request('status'))
-                    <span class="badge bg-info">
-                        Holat: {{ ucfirst(request('status')) }}
-                        <a href="{{ request()->fullUrlWithQuery(['status' => null]) }}" class="text-white ms-1">×</a>
-                    </span>
-                @endif
-                @if(request('date'))
-                    <span class="badge bg-success">
-                        Sana: {{ request('date') }}
-                        <a href="{{ request()->fullUrlWithQuery(['date' => null]) }}" class="text-white ms-1">×</a>
-                    </span>
-                @endif
-                @if(request('start_date') && request('end_date'))
-                    <span class="badge bg-warning">
-                        Oraliq: {{ request('start_date') }} - {{ request('end_date') }}
-                        <a href="{{ request()->fullUrlWithQuery(['start_date' => null, 'end_date' => null]) }}" class="text-white ms-1">×</a>
-                    </span>
-                @endif
-                @if(request('search'))
-                    <span class="badge bg-secondary">
-                        Qidiruv: "{{ request('search') }}"
-                        <a href="{{ request()->fullUrlWithQuery(['search' => null]) }}" class="text-white ms-1">×</a>
-                    </span>
-                @endif
-                <a href="{{ route('orders.index') }}" class="badge bg-danger text-decoration-none">
-                    Barcha filtrlarni tozalash
-                </a>
-            </div>
-        </div>
-        @endif
     </div>
 </div>
 
@@ -176,6 +125,7 @@
                         <th>Vaqt</th>
                         <th>Mahsulotlar</th>
                         <th>Summa</th>
+                        <th>To'lov</th>
                         <th>Holat</th>
                         <th>Amallar</th>
                     </tr>
@@ -238,6 +188,24 @@
                             @endif
                         </td>
                         <td>
+                            @php
+                                $totalPaid = $order->getTotalPaid();
+                                $remainingAmount = $order->getRemainingAmount();
+                            @endphp
+                            
+                            @if($totalPaid == 0)
+                                <span class="badge bg-danger">To'lanmagan</span>
+                                <br><small class="text-muted">{{ number_format($order->total_amount) }} so'm</small>
+                            @elseif($remainingAmount == 0)
+                                <span class="badge bg-success">To'langan</span>
+                                <br><small class="text-success">{{ number_format($totalPaid) }} so'm</small>
+                            @else
+                                <span class="badge bg-warning">Qisman</span>
+                                <br><small class="text-success">{{ number_format($totalPaid) }} so'm</small>
+                                <br><small class="text-danger">Qoldi: {{ number_format($remainingAmount) }}</small>
+                            @endif
+                        </td>
+                        <td>
                             @if($order->status === 'pending')
                                 <span class="badge bg-warning">Jarayonda</span>
                             @elseif($order->status === 'completed')
@@ -246,25 +214,36 @@
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm">
+                                <!-- Ko'rish tugmasi -->
                                 <a href="{{ route('orders.show', $order) }}" class="btn btn-outline-info" title="Ko'rish">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 
+                                <!-- Tahrirlash tugmasi -->
                                 @if(in_array($order->status, ['pending']))
-                                    <a href="{{ route('orders.edit', $order) }}" class="btn btn-outline-primary" title="To'liq Tahrirlash">
+                                    <a href="{{ route('orders.edit', $order) }}" class="btn btn-outline-primary" title="Tahrirlash">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                 @endif
                                 
-                                @if($order->status !== 'completed')
-                                    <button class="btn btn-outline-warning" onclick="showQuickStatus('{{ $order->id }}', '{{ $order->status }}')" title="Holat O'zgartirish">
-                                        <i class="fas fa-sync-alt"></i>
+                                <!-- To'lov tugmasi -->
+                                @if($order->status === 'completed' && $order->getRemainingAmount() > 0)
+                                    <button class="btn btn-outline-success" onclick="showPaymentModal('{{ $order->id }}', '{{ $order->order_number }}', {{ $order->getRemainingAmount() }})" title="To'lov">
+                                        <i class="fas fa-credit-card"></i>
                                     </button>
                                 @endif
                                 
-                                @if(in_array($order->status, ['preparing', 'ready']))
-                                    <button class="btn btn-outline-success" onclick="quickServe('{{ $order->id }}')" title="Tez Xizmat">
-                                        <i class="fas fa-hand-paper"></i>
+                                <!-- Chek chop etish tugmasi -->
+                                @if($order->status === 'completed')
+                                    <button class="btn btn-outline-secondary" onclick="printReceipt('{{ $order->id }}')" title="Chek">
+                                        <i class="fas fa-receipt"></i>
+                                    </button>
+                                @endif
+                                
+                                <!-- Holat o'zgartirish -->
+                                @if($order->status !== 'completed')
+                                    <button class="btn btn-outline-warning" onclick="showQuickStatus('{{ $order->id }}', '{{ $order->status }}')" title="Holat">
+                                        <i class="fas fa-sync-alt"></i>
                                     </button>
                                 @endif
                             </div>
@@ -272,7 +251,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center py-4">
+                        <td colspan="10" class="text-center py-4">
                             <i class="fas fa-utensils fa-3x text-muted mb-3"></i>
                             <h5 class="text-muted">Buyurtmalar topilmadi</h5>
                             <p class="text-muted">Yangi buyurtma yaratish uchun yuqoridagi tugmani bosing</p>
@@ -285,35 +264,75 @@
 
         <div class="d-flex justify-content-between align-items-center">
             {{ $orders->appends(request()->query())->links() }}
-            
-            <!-- Per page selector -->
-            <div class="d-flex align-items-center">
-                <span class="me-2 text-muted">Ko'rsatish:</span>
-                <form method="GET" class="d-inline">
-                    @foreach(request()->query() as $key => $value)
-                        @if($key !== 'per_page' && $key !== 'page')
-                            <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-                        @endif
-                    @endforeach
-                    <select name="per_page" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
-                        <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
-                        <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20</option>
-                        <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
-                        <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
-                    </select>
-                </form>
-                <span class="ms-2 text-muted">ta</span>
-            </div>
         </div>
-        
-        <!-- Pagination Info -->
-        <div class="mt-2 text-center">
-            <small class="text-muted">
-                {{ $orders->firstItem() }}-{{ $orders->lastItem() }} dan {{ $orders->total() }} ta ko'rsatilmoqda
-                @if(request()->hasAny(['order_type', 'status', 'date', 'search']))
-                    (filtrlangan)
-                @endif
-            </small>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">To'lov Qabul Qilish</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="paymentForm">
+                <div class="modal-body">
+                    <input type="hidden" id="paymentOrderId">
+                    
+                    <div class="alert alert-info">
+                        <strong>Buyurtma:</strong> <span id="paymentOrderNumber"></span><br>
+                        <strong>To'lov summasi:</strong> <span id="paymentAmount"></span> so'm
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="payment_method" class="form-label">To'lov Usuli *</label>
+                        <select class="form-control" id="payment_method" name="payment_method" required>
+                            <option value="">To'lov usulini tanlang</option>
+                            <option value="cash">Naqd pul</option>
+                            <option value="card">Plastik karta</option>
+                            <option value="transfer">Bank o'tkazmasi</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="payment_amount" class="form-label">To'lov summasi (so'm) *</label>
+                        <input type="number" class="form-control" id="payment_amount" name="amount"  required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="payment_notes" class="form-label">Izoh</label>
+                        <textarea class="form-control" id="payment_notes" name="notes" rows="2" placeholder="Qo'shimcha ma'lumotlar..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-credit-card"></i> To'lovni Qabul Qilish
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Receipt Modal -->
+<div class="modal fade" id="receiptModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chek</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="receiptContent">
+                <!-- Receipt content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Yopish</button>
+                <button type="button" class="btn btn-primary" onclick="printReceiptContent()">
+                    <i class="fas fa-print"></i> Chop Etish
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -347,30 +366,107 @@
 
 @section('scripts')
 <script>
+// Payment Modal Functions
+function showPaymentModal(orderId, orderNumber, amount) {
+    document.getElementById('paymentOrderId').value = orderId;
+    document.getElementById('paymentOrderNumber').textContent = orderNumber;
+    document.getElementById('paymentAmount').textContent = amount.toLocaleString();
+    document.getElementById('payment_amount').value = amount;
+    new bootstrap.Modal(document.getElementById('paymentModal')).show();
+}
+
+// Process Payment
+document.getElementById('paymentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const orderId = document.getElementById('paymentOrderId').value;
+    const formData = new FormData(this);
+    
+    fetch(`/orders/${orderId}/payment`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+            location.reload();
+        } else {
+            alert(data.message || 'To\'lovni qabul qilishda xatolik yuz berdi');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('To\'lovni qabul qilishda xatolik yuz berdi');
+    });
+});
+
+// Print Receipt Function
+function printReceipt(orderId) {
+    fetch(`/orders/${orderId}/receipt`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('receiptContent').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('receiptModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Chekni yuklashda xatolik yuz berdi');
+        });
+}
+
+function printReceiptContent() {
+    const printContent = document.getElementById('receiptContent').innerHTML;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Chek</title>
+                <style>
+                    body { font-family: 'Courier New', monospace; margin: 20px; }
+                    .receipt { max-width: 300px; margin: 0 auto; }
+                    .text-center { text-align: center; }
+                    .text-right { text-align: right; }
+                    .border-top { border-top: 1px dashed #000; margin-top: 10px; padding-top: 5px; }
+                    .mb-2 { margin-bottom: 10px; }
+                    .fw-bold { font-weight: bold; }
+                    hr { border: none; border-top: 1px dashed #000; }
+                </style>
+            </head>
+            <body onload="window.print(); window.close();">
+                ${printContent}
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+
+// Quick Status Functions
 function showQuickStatus(orderId, currentStatus) {
     document.getElementById('currentOrderId').value = orderId;
     document.getElementById('quickStatusSelect').value = currentStatus;
     new bootstrap.Modal(document.getElementById('quickStatusModal')).show();
 }
 
-function quickServe(orderId) {
-    if (confirm('Bu buyurtmani berildi deb belgilaysizmi?')) {
-        updateOrderQuickStatus(orderId, 'served');
-    }
-}
-
-function updateOrderQuickStatus(orderId, status) {
+function applyQuickStatus() {
+    const orderId = document.getElementById('currentOrderId').value;
+    const newStatus = document.getElementById('quickStatusSelect').value;
+    
     fetch(`/orders/${orderId}/quick-status`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
-        body: JSON.stringify({ status: status })
+        body: JSON.stringify({ status: newStatus })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('quickStatusModal')).hide();
             location.reload();
         } else {
             alert('Xatolik yuz berdi');
@@ -381,22 +477,6 @@ function updateOrderQuickStatus(orderId, status) {
         alert('Xatolik yuz berdi');
     });
 }
-
-function applyQuickStatus() {
-    const orderId = document.getElementById('currentOrderId').value;
-    const newStatus = document.getElementById('quickStatusSelect').value;
-    
-    updateOrderQuickStatus(orderId, newStatus);
-    bootstrap.Modal.getInstance(document.getElementById('quickStatusModal')).hide();
-}
-
-// Auto refresh every 30 seconds for kitchen orders
-setInterval(() => {
-    const url = new URL(window.location);
-    if (url.searchParams.get('status') === 'preparing' || url.searchParams.get('status') === 'ready') {
-        location.reload();
-    }
-}, 30000);
 </script>
 
 <style>
@@ -410,8 +490,14 @@ setInterval(() => {
 }
 
 .btn-group-sm .btn {
-    padding: 0.25rem 0.5rem;
+    padding: 0.25rem 0.4rem;
     font-size: 0.75rem;
+}
+
+.receipt {
+    font-family: 'Courier New', monospace;
+    max-width: 300px;
+    margin: 0 auto;
 }
 
 @media (max-width: 768px) {
@@ -420,8 +506,23 @@ setInterval(() => {
     }
     
     .btn-group-sm .btn {
-        padding: 0.2rem 0.4rem;
+        padding: 0.2rem 0.3rem;
         font-size: 0.7rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #receiptContent, #receiptContent * {
+        visibility: visible;
+    }
+    #receiptContent {
+        position: absolute;
+        left: 0;
+        top: 0;
     }
 }
 </style>
