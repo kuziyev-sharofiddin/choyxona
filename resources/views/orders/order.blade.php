@@ -76,7 +76,8 @@
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="customer_phone" class="form-label">Telefon *</label>
-                                <input type="tel" class="form-control" id="customer_phone" name="customer_phone" required>
+                                <input type="tel" class="form-control" id="customer_phone" name="customer_phone" 
+                                       placeholder="+998 99 123 45 67" maxlength="17" required>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -305,7 +306,47 @@ let currentProduct = null;
 // Reservation data for displaying details
 const reservationsData = @json($reservations ?? []);
 
-// Order type change handler
+// Telefon raqamini formatlash
+function formatPhoneNumber(input) {
+    // Faqat raqamlarni qoldirish
+    let value = input.value.replace(/\D/g, '');
+    
+    // Agar 998 bilan boshlanmasa, avtomatik qo'shish
+    if (value.length > 0 && !value.startsWith('998')) {
+        if (value.startsWith('9')) {
+            value = '998' + value;
+        } else {
+            value = '998' + value;
+        }
+    }
+    
+    // Formatlash +998 XX XXX XX XX
+    let formatted = '';
+    if (value.length > 0) {
+        formatted = '+998';
+        if (value.length > 3) {
+            formatted += ' ' + value.slice(3, 5);
+        }
+        if (value.length > 5) {
+            formatted += ' ' + value.slice(5, 8);
+        }
+        if (value.length > 8) {
+            formatted += ' ' + value.slice(8, 10);
+        }
+        if (value.length > 10) {
+            formatted += ' ' + value.slice(10, 12);
+        }
+    }
+    
+    input.value = formatted;
+}
+
+// Telefon raqamini tekshirish
+function validatePhoneNumber(phone) {
+    const cleanPhone = phone.replace(/\D/g, '');
+    return cleanPhone.length === 12 && cleanPhone.startsWith('998');
+}
+
 // Order type change handler - tuzatilgan versiya
 document.querySelectorAll('input[name="order_type"]').forEach(radio => {
     radio.addEventListener('change', function() {
@@ -544,10 +585,21 @@ function calculateTotal() {
 // Delivery fee change handler
 document.getElementById('delivery_fee').addEventListener('input', calculateTotal);
 
-// Form validation - removed since HTML5 validation will handle it now
+// Form validation
 document.getElementById('orderForm').addEventListener('submit', function(e) {
     const orderTypeRadio = document.querySelector('input[name="order_type"]:checked');
     const orderType = orderTypeRadio ? orderTypeRadio.value : 'dine_in';
+    
+    // Telefon raqamini tekshirish (faqat takeaway/delivery uchun)
+    if (orderType === 'takeaway' || orderType === 'delivery') {
+        const phoneInput = document.getElementById('customer_phone');
+        if (phoneInput.value && !validatePhoneNumber(phoneInput.value)) {
+            e.preventDefault();
+            alert('Telefon raqamini to\'g\'ri formatda kiriting: +998 XX XXX XX XX');
+            phoneInput.focus();
+            return false;
+        }
+    }
     
     // Only validate reservation for dine-in orders
     if (orderType === 'dine_in') {
@@ -568,6 +620,29 @@ document.getElementById('orderForm').addEventListener('submit', function(e) {
 
 // Product card hover effects
 document.addEventListener('DOMContentLoaded', function() {
+    // Telefon input eventlarini qo'shish
+    const phoneInput = document.getElementById('customer_phone');
+    if (phoneInput) {
+        // Input event listener
+        phoneInput.addEventListener('input', function(e) {
+            formatPhoneNumber(this);
+        });
+
+        // Focus bo'lganda +998 ni qo'shish
+        phoneInput.addEventListener('focus', function(e) {
+            if (this.value === '') {
+                this.value = '+998 ';
+            }
+        });
+
+        // Backspace tugmasini bosganda +998 ni o'chirmaslik
+        phoneInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace' && this.value === '+998 ') {
+                e.preventDefault();
+            }
+        });
+    }
+
     const productCards = document.querySelectorAll('.product-card');
     productCards.forEach(card => {
         card.style.cursor = 'pointer';

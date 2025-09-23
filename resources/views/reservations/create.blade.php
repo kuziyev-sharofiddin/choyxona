@@ -28,7 +28,7 @@
                                 <label for="customer_phone" class="form-label">Telefon Raqami *</label>
                                 <input type="tel" class="form-control @error('customer_phone') is-invalid @enderror" 
                                        id="customer_phone" name="customer_phone" value="{{ old('customer_phone') }}" 
-                                       placeholder="+998 90 123 45 67" required>
+                                       placeholder="+998 99 123 45 67" required maxlength="17">
                                 @error('customer_phone')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -181,6 +181,78 @@
 <script>
 // Bugungi sanani minimum qiymat sifatida belgilash
 document.getElementById('reservation_date').min = new Date().toISOString().split('T')[0];
+
+// Telefon raqamini formatlash
+function formatPhoneNumber(input) {
+    // Faqat raqamlarni qoldirish
+    let value = input.value.replace(/\D/g, '');
+    
+    // Agar 998 bilan boshlanmasa, avtomatik qo'shish
+    if (value.length > 0 && !value.startsWith('998')) {
+        if (value.startsWith('9')) {
+            value = '998' + value;
+        } else {
+            value = '998' + value;
+        }
+    }
+    
+    // Formatlash +998 XX XXX XX XX
+    let formatted = '';
+    if (value.length > 0) {
+        formatted = '+998';
+        if (value.length > 3) {
+            formatted += ' ' + value.slice(3, 5);
+        }
+        if (value.length > 5) {
+            formatted += ' ' + value.slice(5, 8);
+        }
+        if (value.length > 8) {
+            formatted += ' ' + value.slice(8, 10);
+        }
+        if (value.length > 10) {
+            formatted += ' ' + value.slice(10, 12);
+        }
+    }
+    
+    input.value = formatted;
+}
+
+// Telefon input elementiga event listener qo'shish
+document.getElementById('customer_phone').addEventListener('input', function(e) {
+    formatPhoneNumber(this);
+});
+
+// Telefon input elementiga focus bo'lganda +998 ni qo'shish
+document.getElementById('customer_phone').addEventListener('focus', function(e) {
+    if (this.value === '') {
+        this.value = '+998 ';
+    }
+});
+
+// Telefon input elementiga keydown event listener
+document.getElementById('customer_phone').addEventListener('keydown', function(e) {
+    // Backspace tugmasini bosganda +998 ni o'chirmaslik
+    if (e.key === 'Backspace' && this.value === '+998 ') {
+        e.preventDefault();
+    }
+});
+
+// Telefon raqamini tekshirish
+function validatePhoneNumber(phone) {
+    const cleanPhone = phone.replace(/\D/g, '');
+    return cleanPhone.length === 12 && cleanPhone.startsWith('998');
+}
+
+// Form yuborishdan oldin telefon raqamini tekshirish
+document.getElementById('reservationForm').addEventListener('submit', function(e) {
+    const phoneInput = document.getElementById('customer_phone');
+    if (!validatePhoneNumber(phoneInput.value)) {
+        e.preventDefault();
+        alert('Telefon raqamini to\'g\'ri formatda kiriting: +998 XX XXX XX XX');
+        phoneInput.focus();
+        return false;
+    }
+});
 
 // Narxni hisoblash
 function calculatePrice() {
