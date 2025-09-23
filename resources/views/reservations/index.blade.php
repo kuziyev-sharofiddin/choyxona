@@ -26,8 +26,8 @@
                 <div class="col-md-3">
                     <div class="form-group">
                         <label>Qidirish</label>
-                        <input type="text" class="form-control" name="search" 
-                               value="{{ request('search') }}" placeholder="Mijoz nomi, telefon...">
+                        <input type="text" class="form-control" name="search"
+                            value="{{ request('search') }}" placeholder="Mijoz nomi, telefon...">
                     </div>
                 </div>
                 <div class="col-md-2">
@@ -111,7 +111,7 @@
                                 <strong>{{ $reservation->customer->name }}</strong>
                                 <br><small class="text-muted">{{ $reservation->customer->phone }}</small>
                                 @if($reservation->customer->email)
-                                    <br><small class="text-muted">{{ $reservation->customer->email }}</small>
+                                <br><small class="text-muted">{{ $reservation->customer->email }}</small>
                                 @endif
                             </div>
                         </td>
@@ -122,16 +122,16 @@
                         </td>
                         <td>
                             <strong>{{ $reservation->reservation_date->format('d.m.Y') }}</strong>
-                            <br><small class="text-muted">{{ $reservation->reservation_date->format('l') }}</small>
+                            <br><small class="text-muted">{{ getUzbekWeekday($reservation->reservation_date) }}</small>
                             @if($reservation->reservation_date->isToday())
-                                <br><span class="badge bg-success">Bugun</span>
+                            <br><span class="badge bg-success">Bugun</span>
                             @elseif($reservation->reservation_date->isTomorrow())
-                                <br><span class="badge bg-warning">Ertaga</span>
+                            <br><span class="badge bg-warning">Ertaga</span>
                             @endif
                         </td>
                         <td>
                             <strong>{{ $reservation->end_date->format('d.m.Y') }}</strong>
-                            <br><small class="text-muted">{{ $reservation->end_date->format('l') }}</small>
+                            <br><small class="text-muted">{{ getUzbekWeekday($reservation->end_date) }}</small>
                         </td>
                         <td>
                             <span class="badge bg-primary">{{ $reservation->days_count }} kun</span>
@@ -144,23 +144,23 @@
                                 <strong class="text-success">{{ number_format($reservation->getTotalAmount()) }} so'm</strong>
                                 <br><small class="text-muted">Xona: {{ number_format($reservation->room_charge) }}</small>
                                 @if($reservation->orders->count() > 0)
-                                    <br><small class="text-muted">Buyurtma: {{ number_format($reservation->orders->sum('total_amount')) }}</small>
+                                <br><small class="text-muted">Buyurtma: {{ number_format($reservation->orders->sum('total_amount')) }}</small>
                                 @endif
                             </div>
                         </td>
                         <td>
                             @if($reservation->status === 'confirmed')
-                                <span class="badge bg-info">Tasdiqlangan</span>
+                            <span class="badge bg-info">Tasdiqlangan</span>
                             @elseif($reservation->status === 'checked_in')
-                                <span class="badge bg-success">Keldi</span>
+                            <span class="badge bg-success">Keldi</span>
                             @elseif($reservation->status === 'completed')
-                                <span class="badge bg-secondary">Tugallangan</span>
+                            <span class="badge bg-secondary">Tugallangan</span>
                             @else
-                                <span class="badge bg-danger">Bekor qilingan</span>
+                            <span class="badge bg-danger">Bekor qilingan</span>
                             @endif
-                            
+
                             @if($reservation->is_active)
-                                <br><span class="badge bg-warning text-dark">Aktiv</span>
+                            <br><span class="badge bg-warning text-dark">Aktiv</span>
                             @endif
                         </td>
                         <td>
@@ -168,13 +168,13 @@
                                 <a href="{{ route('reservations.show', $reservation) }}" class="btn btn-outline-info" title="Ko'rish">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                
+
                                 @if(in_array($reservation->status, ['confirmed']))
                                 <a href="{{ route('reservations.edit', $reservation) }}" class="btn btn-outline-primary" title="Tahrirlash">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 @endif
-                                
+
                                 @if($reservation->status === 'confirmed')
                                 <form action="{{ route('reservations.checkin', $reservation) }}" method="POST" style="display:inline">
                                     @csrf
@@ -183,13 +183,13 @@
                                     </button>
                                 </form>
                                 @endif
-                                
+
                                 @if(in_array($reservation->status, ['confirmed', 'checked_in']))
                                 <a href="{{ route('orders.create', ['reservation_id' => $reservation->id]) }}" class="btn btn-outline-warning" title="Buyurtma">
                                     <i class="fas fa-utensils"></i>
                                 </a>
                                 @endif
-                                
+
                                 @if($reservation->status === 'checked_in')
                                 <form action="{{ route('reservations.complete', $reservation) }}" method="POST" style="display:inline">
                                     @csrf
@@ -210,7 +210,7 @@
         <div class="d-flex justify-content-between align-items-center mt-3">
             <div>
                 <small class="text-muted">
-                    Jami {{ $reservations->total() }} ta rezervatsiya, 
+                    Jami {{ $reservations->total() }} ta rezervatsiya,
                     {{ $reservations->firstItem() }}-{{ $reservations->lastItem() }} ko'rsatilmoqda
                 </small>
             </div>
@@ -232,24 +232,24 @@
 </div>
 
 <style>
-.table tbody tr:hover {
-    background-color: rgba(0,123,255,0.1);
-}
+    .table tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.1);
+    }
 
-.badge {
-    font-size: 0.75em;
-}
+    .badge {
+        font-size: 0.75em;
+    }
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-submit filter form on change
-    const filterInputs = document.querySelectorAll('select[name="room_id"], select[name="status"], input[name="date"]');
-    filterInputs.forEach(input => {
-        input.addEventListener('change', function() {
-            this.form.submit();
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-submit filter form on change
+        const filterInputs = document.querySelectorAll('select[name="room_id"], select[name="status"], input[name="date"]');
+        filterInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                this.form.submit();
+            });
         });
     });
-});
 </script>
 @endsection
