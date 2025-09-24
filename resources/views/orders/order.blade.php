@@ -100,7 +100,7 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="delivery_fee" class="form-label">Yetkazib Berish Haqi (so'm)</label>
-                                    <input type="number" class="form-control" id="delivery_fee" name="delivery_fee" value="10000" min="0">
+                                    <input type="text" class="form-control" id="delivery_fee" name="delivery_fee" value="10,000" min="0">
                                 </div>
                             </div>
                         </div>
@@ -306,6 +306,27 @@ let currentProduct = null;
 // Reservation data for displaying details
 const reservationsData = @json($reservations ?? []);
 
+// Pul summalarini formatlash
+function formatCurrency(input) {
+    // Faqat raqamlarni qoldirish
+    let value = input.value.replace(/[^\d]/g, '');
+    
+    // Agar bo'sh bo'lsa, 0 qo'yish
+    if (value === '') {
+        value = '0';
+    }
+    
+    // Raqamni format qilish (bo'sh joy bilan ajratish)
+    const formatted = parseInt(value).toLocaleString('ru-RU').replace(/,/g, ' ');
+    
+    input.value = formatted;
+}
+
+// Formatlangan summani raqamga aylantirish
+function parseCurrency(value) {
+    return parseInt(value.replace(/[^\d]/g, '')) || 0;
+}
+
 // Telefon raqamini formatlash
 function formatPhoneNumber(input) {
     // Faqat raqamlarni qoldirish
@@ -366,7 +387,8 @@ document.querySelectorAll('input[name="order_type"]').forEach(radio => {
         const deliveryAddress = document.getElementById('delivery_address');
         
         // Reset delivery fee input
-        document.getElementById('delivery_fee').value = '10000';
+        const deliveryFeeInput = document.getElementById('delivery_fee');
+        deliveryFeeInput.value = '10,000';
         
         if (orderType === 'dine_in') {
             // Dine-in: faqat rezervatsiya kerak
@@ -568,7 +590,7 @@ function calculateTotal() {
     // Delivery fee calculation
     let deliveryFee = 0;
     if (orderType === 'delivery') {
-        deliveryFee = parseFloat(document.getElementById('delivery_fee').value) || 0;
+        deliveryFee = parseCurrency(document.getElementById('delivery_fee').value);
         document.getElementById('deliveryFeeDisplay').textContent = deliveryFee.toLocaleString() + ' so\'m';
     }
     
@@ -583,7 +605,10 @@ function calculateTotal() {
 }
 
 // Delivery fee change handler
-document.getElementById('delivery_fee').addEventListener('input', calculateTotal);
+document.getElementById('delivery_fee').addEventListener('input', function() {
+    formatCurrency(this);
+    calculateTotal();
+});
 
 // Form validation
 document.getElementById('orderForm').addEventListener('submit', function(e) {
