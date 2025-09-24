@@ -196,6 +196,9 @@
                     <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                         <i class="fas fa-tachometer-alt me-2"></i> Dashboard
                     </a>
+                    <!-- <a class="nav-link {{ request()->routeIs('reservations.*') ? 'active' : '' }}" href="{{ route('quick-order.index') }}">
+                        <i class="fas fa-calendar-check me-2"></i> Tezkor Buyurtma
+                    </a> -->
                     <a class="nav-link {{ request()->routeIs('reservations.*') ? 'active' : '' }}" href="{{ route('reservations.index') }}">
                         <i class="fas fa-calendar-check me-2"></i> Rezervatsiyalar
                     </a>

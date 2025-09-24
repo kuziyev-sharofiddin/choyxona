@@ -30,6 +30,7 @@ return new class extends Migration
             $table->decimal('total_amount', 12, 2);
             $table->string('status')->default('pending'); // pending, preparing, ready, served, completed
             $table->text('notes')->nullable();
+            $table->string('table_number')->nullable();
             $table->timestamp('order_time');
             $table->timestamp('served_time')->nullable();
             $table->timestamps();

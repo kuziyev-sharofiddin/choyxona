@@ -100,6 +100,11 @@ class OrderController extends Controller
 
     return view('orders.index', compact('orders', 'stats', 'todayStats'));
 }
+public function fastOrder(Order $order)
+{
+
+    return view('orders.payment', compact('order'));
+}
 public function processPayment(Request $request, Order $order)
 {
     $request->validate([

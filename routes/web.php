@@ -1,18 +1,19 @@
 <?php
 // routes/web.php
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\EmployeeController;
-use App\Http\Controllers\OrderByTypeController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\RoomController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\ReportController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\QuickOrderController;
+use App\Http\Controllers\OrderByTypeController;
 use App\Http\Controllers\ReservationController;
-use App\Http\Controllers\RoomController;
-use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,6 +65,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/orders/infinite', [OrderController::class, 'getOrdersInfinite'])->name('orders.infinite');
     Route::post('orders/{order}/payment', [OrderController::class, 'processPayment'])->name('orders.payment');
     Route::get('orders/{order}/receipt', [OrderController::class, 'generateReceipt'])->name('orders.receipt');
+    Route::get('orders/fast-order', [OrderController::class, 'fastOrder'])->name('orders.fast-order');
+    Route::get('/quick-order', [QuickOrderController::class, 'index'])->name('quick-order.index');
+    Route::post('/quick-order', [QuickOrderController::class, 'store'])->name('quick-order.store');
+    Route::get('/quick-order/{order}/receipt', [QuickOrderController::class, 'receipt'])->name('quick-order.receipt');
+    Route::get('/quick-order/{order}/print', [QuickOrderController::class, 'printReceipt'])->name('quick-order.print');
 
     // Products
     Route::resource('products', ProductController::class);

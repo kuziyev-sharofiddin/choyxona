@@ -19,6 +19,7 @@ class Order extends Model
         'delivery_address',
         'delivery_fee',
         'subtotal',
+        'table_number',
         'order_type',
         'tax_amount',
         'waiter_commission',
