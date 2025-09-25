@@ -226,7 +226,7 @@
                             <span id="subtotal">0 so'm</span>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <span id="commissionLabel">Ofitsiant (0%):</span>
+                            <span id="commissionLabel">Xizmat xaqi (0%):</span>
                             <span id="commission">0 so'm</span>
                         </div>
                         <div class="d-flex justify-content-between" id="deliveryFeeRow" style="display: none;">
@@ -598,7 +598,7 @@ function calculateTotal() {
     const total = subtotal + commission + deliveryFee - discount;
     
     // Update display
-    document.getElementById('commissionLabel').textContent = `Ofitsiant (${commissionPercentage}):`;
+    document.getElementById('commissionLabel').textContent = `Xizmat xaqi (${commissionPercentage}):`;
     document.getElementById('subtotal').textContent = subtotal.toLocaleString() + ' so\'m';
     document.getElementById('commission').textContent = commission.toLocaleString() + ' so\'m';
     document.getElementById('total').textContent = total.toLocaleString() + ' so\'m';

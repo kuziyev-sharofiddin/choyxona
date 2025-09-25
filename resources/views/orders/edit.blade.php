@@ -244,7 +244,7 @@
                         </tr>
                         @if($order->order_type === 'dine_in')
                         <tr>
-                            <td>Ofitsiant (10%):</td>
+                            <td>Xizmat xaqi (10%):</td>
                             <td class="text-end" id="commissionDisplay">{{ number_format($order->waiter_commission) }} so'm</td>
                         </tr>
                         @endif
@@ -274,13 +274,13 @@
                     @if($order->order_type === 'dine_in')
                     <div class="alert alert-info small">
                         <i class="fas fa-info-circle"></i> <strong>Dine-in:</strong><br>
-                        • 10% ofitsiant komissiyasi qo'shiladi<br>
+                        • 10% xizmat xaqi komissiyasi qo'shiladi<br>
                         • Xona: {{ $order->reservation->room->name_uz ?? 'N/A' }}
                     </div>
                     @elseif($order->order_type === 'takeaway')
                     <div class="alert alert-success small">
                         <i class="fas fa-shopping-bag"></i> <strong>Takeaway:</strong><br>
-                        • Ofitsiant komissiyasi yo'q<br>
+                        • Xizmat xaqi komissiyasi yo'q<br>
                         • Mijoz o'zi olib ketadi
                     </div>
                     @else

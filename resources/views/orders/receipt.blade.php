@@ -161,7 +161,7 @@
     <!-- Footer -->
     <div class="text-center">
         <p class="mb-1"><strong>RAHMAT!</strong></p>
-        <p class="mb-1">Sizning tanlovingiz bizning maqtanimiz!</p>
+        <p class="mb-1">Bizni tanlaganingiz uchun tashakkur</p>
         <small class="text-muted">Yana tashrif buyuring</small>
     </div>
     

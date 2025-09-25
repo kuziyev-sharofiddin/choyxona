@@ -223,7 +223,7 @@
                     <span>{{ number_format($order->subtotal) }} so'm</span>
                 </div>
                 <div class="row">
-                    <span>Ofitsiant (10%):</span>
+                    <span>Xizmat xaqi (10%):</span>
                     <span>{{ number_format($order->waiter_commission ?? $order->subtotal * 0.10) }} so'm</span>
                 </div>
                 @if($order->discount_amount > 0)

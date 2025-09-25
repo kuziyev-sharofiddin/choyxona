@@ -128,7 +128,7 @@
                     </tr>
                     @if($order->order_type === 'takeaway')
                     <tr>
-                        <td>Ofitsiant komissiyasi (10%):</td>
+                        <td>Xizmat xaqi komissiyasi (10%):</td>
                         <td class="text-end">{{ number_format($order->waiter_commission ?? $order->subtotal * 0.10) }} so'm</td>
                     </tr>
                     @elseif ($order->order_type === 'delivery')
