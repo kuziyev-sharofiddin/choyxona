@@ -23,17 +23,17 @@
     <div class="card-body">
         <form method="GET" action="{{ route('reservations.index') }}">
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label>Qidirish</label>
-                        <input type="text" class="form-control" name="search"
+                        <input type="text" class="form-control" name="search" id="searchInput"
                             value="{{ request('search') }}" placeholder="Mijoz nomi, telefon...">
                     </div>
                 </div>
                 <div class="col-md-2">
                     <div class="form-group">
                         <label>Holat</label>
-                        <select class="form-control" name="status">
+                        <select class="form-control auto-submit" name="status">
                             <option value="">Barcha</option>
                             <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Tasdiqlangan</option>
                             <option value="checked_in" {{ request('status') == 'checked_in' ? 'selected' : '' }}>Faol</option>
@@ -42,10 +42,10 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <div class="form-group">
                         <label>Xona</label>
-                        <select class="form-control" name="room_id">
+                        <select class="form-control auto-submit" name="room_id">
                             <option value="">Barcha xonalar</option>
                             @foreach($rooms as $room)
                             <option value="{{ $room->id }}" {{ request('room_id') == $room->id ? 'selected' : '' }}>
@@ -58,17 +58,7 @@
                 <div class="col-md-3">
                     <div class="form-group">
                         <label>Sana</label>
-                        <input type="date" class="form-control" name="date" value="{{ request('date') }}">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label>&nbsp;</label>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-outline-primary">
-                                <i class="fas fa-search"></i> Qidirish
-                            </button>
-                        </div>
+                        <input type="date" class="form-control auto-submit" name="date" value="{{ request('date') }}">
                     </div>
                 </div>
             </div>
@@ -243,13 +233,55 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Auto-submit filter form on change
-        const filterInputs = document.querySelectorAll('select[name="room_id"], select[name="status"], input[name="date"]');
-        filterInputs.forEach(input => {
+        // Auto-submit filter form on change for select and date inputs
+        const autoSubmitInputs = document.querySelectorAll('.auto-submit');
+        autoSubmitInputs.forEach(input => {
             input.addEventListener('change', function() {
                 this.form.submit();
             });
         });
+
+        // Auto-submit search input with debounce
+        const searchInput = document.getElementById('searchInput');
+        let searchTimeout;
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const cursorPosition = this.selectionStart;
+                const inputValue = this.value;
+
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    // Save scroll position
+                    const scrollPos = window.scrollY;
+
+                    // Submit form
+                    this.form.submit();
+
+                    // Restore cursor position and scroll after page reload
+                    sessionStorage.setItem('searchCursorPosition', cursorPosition);
+                    sessionStorage.setItem('searchInputValue', inputValue);
+                    sessionStorage.setItem('scrollPosition', scrollPos);
+                }, 500); // 500ms debounce
+            });
+
+            // Restore cursor position after page load
+            const savedCursorPosition = sessionStorage.getItem('searchCursorPosition');
+            const savedInputValue = sessionStorage.getItem('searchInputValue');
+            const savedScrollPos = sessionStorage.getItem('scrollPosition');
+
+            if (savedCursorPosition && savedInputValue === searchInput.value) {
+                searchInput.focus();
+                searchInput.setSelectionRange(savedCursorPosition, savedCursorPosition);
+                sessionStorage.removeItem('searchCursorPosition');
+                sessionStorage.removeItem('searchInputValue');
+            }
+
+            if (savedScrollPos) {
+                window.scrollTo(0, parseInt(savedScrollPos));
+                sessionStorage.removeItem('scrollPosition');
+            }
+        }
     });
 </script>
 @endsection

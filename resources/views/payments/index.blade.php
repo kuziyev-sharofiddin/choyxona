@@ -74,7 +74,7 @@
                     <tr>
                         <th>To'lov №</th>
                         <th>Mijoz</th>
-                        <th>Rezervatsiya</th>
+                        <th>Tur</th>
                         <th>Summa</th>
                         <th>To'lov Usuli</th>
                         <th>Kassir</th>

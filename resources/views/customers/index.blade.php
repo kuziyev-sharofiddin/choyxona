@@ -79,22 +79,17 @@
     <div class="card-body">
         <form method="GET" action="{{ route('customers.index') }}">
             <div class="row">
-                <div class="col-md-6">
-                    <input type="text" class="form-control" name="search" 
+                <div class="col-md-8">
+                    <input type="text" class="form-control" name="search" id="searchInput"
                            value="{{ request('search') }}" placeholder="Ism, telefon yoki email bo'yicha qidiring...">
                 </div>
-                <div class="col-md-3">
-                    <select class="form-control" name="sort">
+                <div class="col-md-4">
+                    <select class="form-control auto-submit" name="sort">
                         <option value="last_visit" {{ request('sort') == 'last_visit' ? 'selected' : '' }}>So'nggi tashrif</option>
                         <option value="total_spent" {{ request('sort') == 'total_spent' ? 'selected' : '' }}>Eng ko'p xarajat</option>
                         <option value="visit_count" {{ request('sort') == 'visit_count' ? 'selected' : '' }}>Eng ko'p tashrif</option>
                         <option value="name" {{ request('sort') == 'name' ? 'selected' : '' }}>Ism bo'yicha</option>
                     </select>
-                </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-outline-primary w-100">
-                        <i class="fas fa-search"></i> Qidirish
-                    </button>
                 </div>
             </div>
         </form>
@@ -222,4 +217,58 @@
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-submit sort select on change
+        const sortSelect = document.querySelector('.auto-submit');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', function() {
+                this.form.submit();
+            });
+        }
+
+        // Auto-submit search input with debounce
+        const searchInput = document.getElementById('searchInput');
+        let searchTimeout;
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const cursorPosition = this.selectionStart;
+                const inputValue = this.value;
+
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    // Save scroll position
+                    const scrollPos = window.scrollY;
+
+                    // Submit form
+                    this.form.submit();
+
+                    // Restore cursor position and scroll after page reload
+                    sessionStorage.setItem('searchCursorPosition', cursorPosition);
+                    sessionStorage.setItem('searchInputValue', inputValue);
+                    sessionStorage.setItem('scrollPosition', scrollPos);
+                }, 500); // 500ms debounce
+            });
+
+            // Restore cursor position after page load
+            const savedCursorPosition = sessionStorage.getItem('searchCursorPosition');
+            const savedInputValue = sessionStorage.getItem('searchInputValue');
+            const savedScrollPos = sessionStorage.getItem('scrollPosition');
+
+            if (savedCursorPosition && savedInputValue === searchInput.value) {
+                searchInput.focus();
+                searchInput.setSelectionRange(savedCursorPosition, savedCursorPosition);
+                sessionStorage.removeItem('searchCursorPosition');
+                sessionStorage.removeItem('searchInputValue');
+            }
+
+            if (savedScrollPos) {
+                window.scrollTo(0, parseInt(savedScrollPos));
+                sessionStorage.removeItem('scrollPosition');
+            }
+        }
+    });
+</script>
 @endsection

@@ -10,11 +10,38 @@ use Illuminate\Support\Facades\DB as FacadesDB;
 
 class CustomerController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $customers = Customer::withCount('reservations')
-                           ->orderBy('last_visit', 'desc')
-                           ->paginate(20);
+        $query = Customer::withCount('reservations');
+
+        // Search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('phone', 'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Sorting
+        $sort = $request->get('sort', 'last_visit');
+        switch ($sort) {
+            case 'total_spent':
+                $query->orderBy('total_spent', 'desc');
+                break;
+            case 'visit_count':
+                $query->orderBy('visit_count', 'desc');
+                break;
+            case 'name':
+                $query->orderBy('name', 'asc');
+                break;
+            default:
+                $query->orderBy('last_visit', 'desc');
+                break;
+        }
+
+        $customers = $query->paginate(20);
 
         return view('customers.index', compact('customers'));
     }

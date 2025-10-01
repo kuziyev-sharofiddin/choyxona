@@ -27,14 +27,14 @@
     <!-- Customer Info -->
     <div class="mb-2">
         @if($order->order_type === 'dine_in' && $order->reservation)
-            <strong>Mijoz:</strong> {{ $order->customer->name }}<br>
-            <strong>Xona:</strong> {{ $order->reservation->room->name_uz }}<br>
-            <strong>Telefon:</strong> {{ $order->customer->phone }}
+            <strong>Mijoz:</strong> {{ $order->customer->name ?? "Mavjud emas" }}<br>
+            <strong>Xona:</strong> {{ $order->reservation->room->name_uz  ?? "Mavjud emas" }}<br>
+            <strong>Telefon:</strong> {{ $order->customer->phone  ?? "Mavjud emas" }}
         @else
-            <strong>Mijoz:</strong> {{ $order->customer_name ?? $order->customer->name }}<br>
-            <strong>Telefon:</strong> {{ $order->customer_phone ?? $order->customer->phone }}
+            <strong>Mijoz:</strong> {{ $order->customer_name ?? $order->customer->name  ?? "Mavjud emas" }}<br>
+            <strong>Telefon:</strong> {{ $order->customer_phone ?? $order->customer->phone  ?? "Mavjud emas" }}
             @if($order->order_type === 'delivery' && $order->delivery_address)
-                <br><strong>Manzil:</strong> {{ $order->delivery_address }}
+                <br><strong>Manzil:</strong> {{ $order->delivery_address  ?? "Mavjud emas" }}
             @endif
         @endif
     </div>
